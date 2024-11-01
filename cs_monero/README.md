@@ -2,26 +2,34 @@
  - A simplified Flutter/Dart Monero (and Wownero) wallet library.
  - Depends on https://github.com/MrCyjaneK/monero_c/
  - Abstracts the wallet2 spaghetti.
- - Refactored and organized version of flutter_libmonero based on https://github.com/cypherstack/flutter_libmonero/tree/heavy-refactor
+ - Refactored and organized version of flutter_libmonero based on 
+   https://github.com/cypherstack/flutter_libmonero/tree/heavy-refactor.
 
 ## Usage
 1. Add this repo as a git submodule.
-2. Add `cs_monero` and `cs_monero_flutter_libs` to your pubspec.yaml as relative dependencies.  Also add `compat` if you're migrating from `flutter_libmonero` to `cs_monero`.
-3. Choose an option below:
+2. Add `cs_monero` and `cs_monero_flutter_libs` to your pubspec.yaml as relative 
+  dependencies.  If you're migrating from `flutter_libmonero` to `cs_monero`, 
+  also add `compat`.
 
-#### Option 1: Build from source
-1. [Build](README.md#building-monero_c) the platforms you want.
-2. Run `tools/copy_outputs_to_cs_monero_flutter_libs_package.sh` to copy the binaries to where Flutter can find them.
+## Build libraries from source (optional but recommended)
+By default, `cs_monero_flutter_libs` will automatically include and download the 
+appropriate platform-specific binaries when you run `flutter pub get`.  Use 
+these at your own risk.  To build the libraries yourself:
 
-#### Option 2: Use precompiled binaries (at your own risk!!!)
-1. Run `tools/use_precompiled_at_your_own_risk.sh` (or .bat on windows) to copy the precompiled binaries so Flutter can find them.
+1. Install [Melos](https://pub.dev/packages/melos) 
+   (`dart pub global activate melos`) and run `melos bootstrap` (or `melos bs`).
+2. Build the platform you want using one of the following commands:
+   - `melos build:android`
+   - `melos build:ios`
+   - `melos build:linux`
+   - `melos build:macos`
+   - `melos build:windows`
+3. Run `melos copyLibs` to copy the binaries to where Flutter can find them.
 
-## Building monero_c
-Run the `build_<platform>.sh` script in `tools/build_scripts` to generate the platform specific outputs for each platform wanted.
-
-##### Building instructions
-- This repo just has some wrapper scripts. For details and requirements see https://github.com/MrCyjaneK/monero_c/
-- To do a clean/fresh build, just the delete the top level `build` dir
+### Building notes
+- This repo's build scripts are just wrappers around `monero_c`'s build scripts.
+  For details and requirements see https://github.com/MrCyjaneK/monero_c/
+- To do a clean/fresh build, just the delete the top level `build` dir.
 
 ## Known Limitations
  - No iOS simulator support
