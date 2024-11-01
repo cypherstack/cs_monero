@@ -15,5 +15,5 @@ This package and its endorsed platform-specific plugin interfaces are not
 required to use `cs_monero`, but they are provided as a quick and convenient way 
 to start coding with the library.  Refer to `cs_monero`'s documentation for more 
 information on building the libraries from source.  Use this package and its 
-platform-specific children as templates or examples for bundling the required 
-binaries.
+platform-specific children as templates or examples for bundling the binaries 
+required.
