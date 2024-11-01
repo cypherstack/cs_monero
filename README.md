@@ -11,11 +11,10 @@
 
 #### Option 1: Build from source
 1. [Build](README.md#building-monero_c) the platforms you want.
-2. Run `tools/copy_outputs_to_cs_monero_flutter_libs_package.sh` to copy the binaries to where fluter can find them.
+2. Run `tools/copy_outputs_to_cs_monero_flutter_libs_package.sh` to copy the binaries to where Flutter can find them.
 
 #### Option 2: Use precompiled binaries (at your own risk!!!)
-1. Run `tools/use_precompiled_at_your_own_risk.sh` (or .bat on windows) to copy the precompiled binaries so flutter can find them.
-
+1. Run `tools/use_precompiled_at_your_own_risk.sh` (or .bat on windows) to copy the precompiled binaries so Flutter can find them.
 
 ## Building monero_c
 Run the `build_<platform>.sh` script in `tools/build_scripts` to generate the platform specific outputs for each platform wanted.
