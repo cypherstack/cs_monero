@@ -1,5 +1,4 @@
 import 'package:cs_monero/cs_monero.dart';
-import 'package:cs_monero/src/enums/min_confirms.dart';
 import 'package:test/test.dart';
 
 void main() {

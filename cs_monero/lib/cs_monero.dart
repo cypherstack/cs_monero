@@ -3,12 +3,12 @@
 /// More dartdocs go here.
 library;
 
+export 'src/enums/min_confirms.dart';
 export 'src/enums/monero_seed_type.dart';
 export 'src/enums/transaction_priority.dart';
 export 'src/enums/wownero_seed_type.dart';
 export 'src/logging.dart';
 export 'src/mnemonics/mnemonics.dart';
-export 'src/models/account.dart';
 export 'src/models/address.dart';
 export 'src/models/output.dart';
 export 'src/models/pending_transaction.dart';
