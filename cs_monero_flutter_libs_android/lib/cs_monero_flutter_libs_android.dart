@@ -13,13 +13,17 @@ class CsMoneroFlutterLibsAndroid extends CsMoneroFlutterLibsPlatform {
   }
 
   @override
-  Future<String?> getPlatformVersion() async {
-    // make calls so flutter doesn't tree shake
-    await Future.wait([
-      CsMoneroFlutterLibsAndroidArm64V8a().getPlatformVersion(),
-      CsMoneroFlutterLibsAndroidArmeabiV7a().getPlatformVersion(),
-      CsMoneroFlutterLibsAndroidX8664().getPlatformVersion(),
-    ]);
+  Future<String?> getPlatformVersion({
+    bool overrideForBasicTestCoverageTesting = false,
+  }) async {
+    if (!overrideForBasicTestCoverageTesting) {
+      // make calls so flutter doesn't tree shake
+      await Future.wait([
+        CsMoneroFlutterLibsAndroidArm64V8a().getPlatformVersion(),
+        CsMoneroFlutterLibsAndroidArmeabiV7a().getPlatformVersion(),
+        CsMoneroFlutterLibsAndroidX8664().getPlatformVersion(),
+      ]);
+    }
 
     final version = await _channel.invokeMethod<String>('getPlatformVersion');
     return version;
