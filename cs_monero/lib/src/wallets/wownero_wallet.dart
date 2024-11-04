@@ -5,7 +5,6 @@ import 'package:meta/meta.dart';
 
 import '../../cs_monero.dart';
 import '../deprecated/get_height_by_date.dart';
-import '../enums/min_confirms.dart';
 import '../ffi_bindings/wownero_wallet_bindings.dart' as wow_ffi;
 import '../ffi_bindings/wownero_wallet_manager_bindings.dart' as wow_wm_ffi;
 
@@ -969,14 +968,14 @@ class WowneroWallet extends Wallet {
     final _ = await Isolate.run(() {
       return wow_ffi.commitPendingTransaction(
         Pointer<Void>.fromAddress(
-          tx.pointerAddress!,
+          tx.pointerAddress,
         ),
       );
     });
 
     wow_ffi.checkPendingTransactionStatus(
       Pointer<Void>.fromAddress(
-        tx.pointerAddress!,
+        tx.pointerAddress,
       ),
     );
   }

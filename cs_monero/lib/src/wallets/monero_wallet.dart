@@ -5,7 +5,6 @@ import 'package:meta/meta.dart';
 
 import '../../cs_monero.dart';
 import '../deprecated/get_height_by_date.dart';
-import '../enums/min_confirms.dart';
 import '../ffi_bindings/monero_wallet_bindings.dart' as xmr_ffi;
 import '../ffi_bindings/monero_wallet_manager_bindings.dart' as xmr_wm_ffi;
 
@@ -910,14 +909,14 @@ class MoneroWallet extends Wallet {
     final _ = await Isolate.run(() {
       return xmr_ffi.commitPendingTransaction(
         Pointer<Void>.fromAddress(
-          tx.pointerAddress!,
+          tx.pointerAddress,
         ),
       );
     });
 
     xmr_ffi.checkPendingTransactionStatus(
       Pointer<Void>.fromAddress(
-        tx.pointerAddress!,
+        tx.pointerAddress,
       ),
     );
   }
