@@ -1,3 +1,12 @@
+<p align="center">
+  <a href="https://pub.dev/packages/cs_monero_flutter_libs">
+    <img src="https://img.shields.io/pub/v/cs_monero_flutter_libs?label=pub.dev&labelColor=333940&logo=dart">
+  </a>
+  <a href="https://github.com/invertase/melos">
+    <img src="https://img.shields.io/badge/maintained%20with-melos-f700ff.svg?style=flat-square">
+  </a>
+</p>
+
 # `cs_monero_flutter_libs`
 A wrapper for platform-specific implementations of the binaries required to use 
 the [`cs_monero` package](https://pub.dev/packages/cs_monero).  Refer to the 

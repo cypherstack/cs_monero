@@ -1,3 +1,12 @@
+<p align="center">
+  <a href="https://pub.dev/packages/cs_monero">
+    <img src="https://img.shields.io/pub/v/cs_monero?label=pub.dev&labelColor=333940&logo=dart">
+  </a>
+  <a href="https://github.com/invertase/melos">
+    <img src="https://img.shields.io/badge/maintained%20with-melos-f700ff.svg?style=flat-square">
+  </a>
+</p>
+
 # About
 - A simplified Flutter/Dart Monero (and Wownero) wallet library.
 - Uses https://github.com/MrCyjaneK/monero_c/ for the compiled native libs.
