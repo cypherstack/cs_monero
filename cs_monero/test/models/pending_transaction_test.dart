@@ -6,14 +6,12 @@ import 'package:test/test.dart';
 void main() {
   group("$PendingTransaction", () {
     test("should correctly initialize all properties", () {
-      // Arrange
       final BigInt amount = BigInt.from(1000000);
       final BigInt fee = BigInt.from(10000);
       final String txid = "abc123";
       final String hex = "0102030405060708090a0b0c0d0e0f10";
       final int pointerAddress = 123456; // Use a valid pointer address
 
-      // Act
       final pendingTransaction = PendingTransaction(
         amount: amount,
         fee: fee,
@@ -22,7 +20,6 @@ void main() {
         pointerAddress: pointerAddress,
       );
 
-      // Assert
       expect(pendingTransaction.amount, amount);
       expect(pendingTransaction.fee, fee);
       expect(pendingTransaction.txid, txid);
@@ -31,7 +28,6 @@ void main() {
     });
 
     test("should throw an error for negative amount", () {
-      // Arrange & Act & Assert
       expect(
         () => PendingTransaction(
           amount: BigInt.from(-1000000), // negative amount
@@ -51,7 +47,6 @@ void main() {
     });
 
     test("should throw an error for negative fee", () {
-      // Arrange & Act & Assert
       expect(
         () => PendingTransaction(
           amount: BigInt.from(1000000),
@@ -71,7 +66,6 @@ void main() {
     });
 
     test("should throw an error for empty txid", () {
-      // Arrange & Act & Assert
       expect(
         () => PendingTransaction(
           amount: BigInt.from(1000000),
@@ -91,7 +85,6 @@ void main() {
     });
 
     test("should throw an error for empty hex", () {
-      // Arrange & Act & Assert
       expect(
         () => PendingTransaction(
           amount: BigInt.from(1000000),
@@ -111,7 +104,6 @@ void main() {
     });
 
     test("should throw an error for null pointerAddress", () {
-      // Arrange & Act & Assert
       expect(
         () => PendingTransaction(
           amount: BigInt.from(1000000),
