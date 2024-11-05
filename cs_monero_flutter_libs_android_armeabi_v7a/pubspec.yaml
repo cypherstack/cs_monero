@@ -1,7 +1,9 @@
 name: cs_monero_flutter_libs_android_armeabi_v7a
 description: "Android armeabi-v7a bins for cs_monero_flutter_libs"
 version: 0.0.1-dev.0
+repository: https://github.com/cypherstack/cs_monero
 homepage: https://github.com/cypherstack/cs_monero
+issue_tracker: https://github.com/cypherstack/cs_monero/issues
 
 environment:
   sdk: ^3.5.3

@@ -2,6 +2,8 @@ name: cs_monero
 description: A monero (and wownero) library
 version: 0.0.1-dev.0
 repository: https://github.com/cypherstack/cs_monero
+homepage: https://github.com/cypherstack/cs_monero
+issue_tracker: https://github.com/cypherstack/cs_monero/issues
 
 environment:
   sdk: ^3.5.3
