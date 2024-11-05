@@ -75,6 +75,42 @@ class WowneroWallet extends Wallet {
   // ===========================================================================
   //  ==== static factory constructor functions ================================
 
+  /// Creates a new Wownero wallet with the specified parameters and seed type.
+  ///
+  /// This function initializes a new [WowneroWallet] instance at the specified path
+  /// and with the provided password. The type of seed generated depends on the
+  /// [WowneroSeedType] parameter. Optionally, it allows creating a deprecated
+  /// 14-word seed wallet if necessary.
+  ///
+  /// ### Parameters:
+  /// - **path** (`String`, required): The file path where the wallet will be created.
+  /// - **password** (`String`, required): The password used to secure the wallet.
+  /// - **language** (`String`, optional): The mnemonic language for seed generation.
+  ///   Defaults to `"English"`.
+  /// - **seedType** (`WowneroSeedType`, required): Specifies the seed type for the wallet:
+  ///   - `fourteen`: 14-word seed (deprecated).
+  ///   - `sixteen`: 16-word seed (uses polyseed).
+  ///   - `twentyFive`: 25-word seed.
+  /// - **networkType** (`int`, optional): Specifies the Wownero network type:
+  ///   - `0`: Mainnet (default).
+  ///   - `1`: Testnet.
+  ///   - `2`: Stagenet.
+  /// - **overrideDeprecated14WordSeedException** (`bool`, optional): If `true`, allows
+  ///   creation of a 14-word seed wallet despite its deprecation. Defaults to `false`.
+  ///
+  /// ### Returns:
+  /// A `Future` that resolves to an instance of [WowneroWallet] once the wallet
+  /// is successfully created.
+  ///
+  /// ### Example:
+  /// ```dart
+  /// final wallet = await WowneroWallet.create(
+  ///   path: '/path/to/new_wallet',
+  ///   password: 'secure_password',
+  ///   seedType: WowneroSeedType.twentyFive,
+  ///   networkType: 0,
+  /// );
+  /// ```
   static Future<WowneroWallet> create({
     required String path,
     required String password,
@@ -152,6 +188,33 @@ class WowneroWallet extends Wallet {
     return wallet;
   }
 
+  /// Restores a Wownero wallet from a mnemonic seed phrase.
+  ///
+  /// ### Parameters:
+  /// - **path** (`String`, required): The file path where the wallet will be stored.
+  /// - **password** (`String`, required): The password used to encrypt the wallet file.
+  /// - **seed** (`String`, required): The mnemonic seed phrase for restoring the wallet.
+  /// - **networkType** (`int`, optional): Specifies the Wownero network type to use:
+  ///   - `0`: Mainnet (default)
+  ///   - `1`: Testnet
+  ///   - `2`: Stagenet
+  /// - **restoreHeight** (`int`, optional): The blockchain height from which to start
+  ///   synchronizing the wallet. Defaults to `0`, starting from the genesis block.
+  ///   NOTE: THIS IS ONLY USED BY 25 WORD SEEDS!
+  ///
+  /// ### Returns:
+  /// A `Future` that resolves to an instance of [WowneroWallet] upon successful restoration.
+  ///
+  /// ### Example:
+  /// ```dart
+  /// final wallet = await WowneroWallet.restoreWalletFromSeed(
+  ///   path: '/path/to/wallet',
+  ///   password: 'secure_password',
+  ///   seed: 'mnemonic seed phrase here',
+  ///   networkType: 0,
+  ///   restoreHeight: 200000, // Start from a specific block height
+  /// );
+  /// ```
   static Future<WowneroWallet> restoreWalletFromSeed({
     required String path,
     required String password,
@@ -213,6 +276,49 @@ class WowneroWallet extends Wallet {
     return wallet;
   }
 
+  /// Creates a view-only Wownero wallet.
+  ///
+  /// This function initializes a view-only [WowneroWallet] instance, which allows the
+  /// user to monitor incoming transactions and view their wallet balance without
+  /// having spending capabilities. This is useful for scenarios where tracking
+  /// wallet activity is required without spending authority.
+  ///
+  /// ### Parameters:
+  /// - **path** (`String`, required): The file path where the view-only wallet will be stored.
+  /// - **password** (`String`, required): The password to encrypt the wallet file.
+  /// - **address** (`String`, required): The public address associated with the wallet.
+  /// - **viewKey** (`String`, required): The private view key, granting read access
+  ///   to the wallet's transaction history.
+  /// - **networkType** (`int`, optional): Specifies the Wownero network type:
+  ///   - `0`: Mainnet (default)
+  ///   - `1`: Testnet
+  ///   - `2`: Stagenet
+  /// - **restoreHeight** (`int`, optional): The blockchain height from which to start
+  ///   synchronizing the wallet. Defaults to `0`, starting from the genesis block.
+  ///
+  /// ### Returns:
+  /// A new instance of [WowneroWallet] with view-only access, allowing tracking
+  /// of the specified wallet without spending permissions.
+  ///
+  /// ### Example:
+  /// ```dart
+  /// final viewOnlyWallet = WowneroWallet.createViewOnlyWallet(
+  ///   path: '/path/to/view_only_wallet',
+  ///   password: 'secure_password',
+  ///   address: 'public_address_here',
+  ///   viewKey: 'view_key_here',
+  ///   networkType: 0,
+  ///   restoreHeight: 50000, // Sync from a specific block height
+  /// );
+  /// ```
+  ///
+  /// ### Errors:
+  /// Throws an error if the provided address or view key is invalid, or if the wallet
+  /// cannot be created due to other issues.
+  ///
+  /// ### Notes:
+  /// - This wallet type allows viewing incoming transactions and balance but
+  ///   does not grant spending capability.
   static WowneroWallet createViewOnlyWallet({
     required String path,
     required String password,
@@ -232,6 +338,48 @@ class WowneroWallet extends Wallet {
         restoreHeight: restoreHeight,
       );
 
+  /// Restores a Wownero wallet from private keys and address.
+  ///
+  /// This function creates a new [WowneroWallet] instance from the provided
+  /// address, view key, and spend key, allowing recovery of a previously
+  /// existing wallet. Specify the wallet file’s path, password, and optional
+  /// network type and restore height to customize the wallet creation process.
+  ///
+  /// ### Parameters:
+  /// - **path** (`String`, required): The file path where the wallet will be stored.
+  /// - **password** (`String`, required): The password to encrypt the wallet file.
+  /// - **language** (`String`, required): The mnemonic language for any future
+  ///   seed generation.
+  /// - **address** (`String`, required): The public address of the wallet to restore.
+  /// - **viewKey** (`String`, required): The private view key associated with the wallet.
+  /// - **spendKey** (`String`, required): The private spend key associated with the wallet.
+  /// - **networkType** (`int`, optional): Specifies the Wownero network type:
+  ///   - `0`: Mainnet (default)
+  ///   - `1`: Testnet
+  ///   - `2`: Stagenet
+  /// - **restoreHeight** (`int`, optional): The blockchain height from which to start
+  ///   synchronizing the wallet. Defaults to `0`, starting from the genesis block.
+  ///
+  /// ### Returns:
+  /// An instance of [WowneroWallet] representing the restored wallet.
+  ///
+  /// ### Example:
+  /// ```dart
+  /// final wallet = WowneroWallet.restoreWalletFromKeys(
+  ///   path: '/path/to/wallet',
+  ///   password: 'secure_password',
+  ///   language: 'English',
+  ///   address: 'public_address_here',
+  ///   viewKey: 'view_key_here',
+  ///   spendKey: 'spend_key_here',
+  ///   networkType: 0,
+  ///   restoreHeight: 100000, // Start syncing from a specific block height
+  /// );
+  /// ```
+  ///
+  /// ### Errors:
+  /// Throws an error if the provided keys or address are invalid, or if the wallet
+  /// cannot be restored due to other issues.
   static WowneroWallet restoreWalletFromKeys({
     required String path,
     required String password,
@@ -261,6 +409,45 @@ class WowneroWallet extends Wallet {
     return wallet;
   }
 
+  /// Restores a Wownero wallet and creates a seed from a private spend key.
+  ///
+  /// ### Parameters:
+  /// - **path** (`String`, required): The file path where the wallet will be stored.
+  /// - **password** (`String`, required): The password to encrypt the wallet file.
+  /// - **language** (`String`, required): The mnemonic language for any future
+  ///   seed generation or wallet recovery prompts.
+  /// - **spendKey** (`String`, required): The private spend key associated with the wallet.
+  /// - **networkType** (`int`, optional): Specifies the Wownero network type:
+  ///   - `0`: Mainnet (default)
+  ///   - `1`: Testnet
+  ///   - `2`: Stagenet
+  /// - **restoreHeight** (`int`, optional): The blockchain height from which to start
+  ///   synchronizing the wallet. Defaults to `0`, starting from the genesis block.
+  ///
+  /// ### Returns:
+  /// An instance of [WowneroWallet] representing the restored wallet with full access
+  /// to the funds associated with the given spend key.
+  ///
+  /// ### Example:
+  /// ```dart
+  /// final wallet = WowneroWallet.restoreDeterministicWalletFromSpendKey(
+  ///   path: '/path/to/wallet',
+  ///   password: 'secure_password',
+  ///   language: 'English',
+  ///   spendKey: 'spend_key_here',
+  ///   networkType: 0,
+  ///   restoreHeight: 100000, // Start syncing from a specific block height
+  /// );
+  /// ```
+  ///
+  /// ### Errors:
+  /// Throws an error if the provided spend key is invalid, or if the wallet cannot be
+  /// restored due to other I/O issues.
+  ///
+  /// ### Notes:
+  /// - This method is useful for users who have lost their mnemonic seed but still have
+  ///   access to their spend key. It allows for full wallet recovery, including access
+  ///   to balances and transaction history.
   static WowneroWallet restoreDeterministicWalletFromSpendKey({
     required String path,
     required String password,
@@ -275,24 +462,43 @@ class WowneroWallet extends Wallet {
       password: password,
       language: language,
       spendKeyString: spendKey,
-      newWallet: true, // TODO(mrcyjanek): safe to remove
+      newWallet: true,
       restoreHeight: restoreHeight,
     );
 
     wow_ffi.checkWalletStatus(walletPointer);
 
-    // TODO check if we should grab seed and cache it here?
-    // wownero.Wallet_setCacheAttribute(
-    //   walletPointer,
-    //   key: "cakewallet.seed",
-    //   value: seed,
-    // );
     final wallet = WowneroWallet._(walletPointer, path);
     wallet.save();
     _openedWalletsByPath[path] = wallet;
     return wallet;
   }
 
+  /// Loads an existing Wownero wallet from the specified path with the provided password.
+  ///
+  /// ### Parameters:
+  /// - **path** (`String`, required): The file path to the existing wallet file to be loaded.
+  /// - **password** (`String`, required): The password used to decrypt the wallet file.
+  /// - **networkType** (`int`, optional): Specifies the Wownero network type:
+  ///   - `0`: Mainnet (default)
+  ///   - `1`: Testnet
+  ///   - `2`: Stagenet
+  ///
+  /// ### Returns:
+  /// An instance of [WowneroWallet] representing the loaded wallet.
+  ///
+  /// ### Example:
+  /// ```dart
+  /// final wallet = WowneroWallet.loadWallet(
+  ///   path: '/path/to/existing_wallet',
+  ///   password: 'secure_password',
+  ///   networkType: 0,
+  /// );
+  /// ```
+  ///
+  /// ### Errors:
+  /// Throws an error if the wallet file cannot be found, the password is incorrect,
+  /// or the file cannot be read due to other I/O issues.
   static WowneroWallet loadWallet({
     required String path,
     required String password,

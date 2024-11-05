@@ -72,6 +72,39 @@ class MoneroWallet extends Wallet {
   // ===========================================================================
   //  ==== static factory constructor functions ================================
 
+  /// Creates a new Monero wallet with the specified parameters and seed type.
+  ///
+  /// This function initializes a new [MoneroWallet] instance at the specified path
+  /// and with the provided password. The type of seed generated depends on the
+  /// [MoneroSeedType] parameter. Optionally, it allows creating a deprecated
+  /// 14-word seed wallet if necessary.
+  ///
+  /// ### Parameters:
+  /// - **path** (`String`, required): The file path where the wallet will be created.
+  /// - **password** (`String`, required): The password used to secure the wallet.
+  /// - **language** (`String`, optional): The mnemonic language for seed generation.
+  ///   Defaults to `"English"`.
+  /// - **seedType** (`MoneroSeedType`, required): Specifies the seed type for the wallet:
+  ///   - `sixteen`: 16-word seed (uses polyseed).
+  ///   - `twentyFive`: 25-word seed.
+  /// - **networkType** (`int`, optional): Specifies the Monero network type:
+  ///   - `0`: Mainnet (default).
+  ///   - `1`: Testnet.
+  ///   - `2`: Stagenet.
+  ///
+  /// ### Returns:
+  /// A `Future` that resolves to an instance of [MoneroWallet] once the wallet
+  /// is successfully created.
+  ///
+  /// ### Example:
+  /// ```dart
+  /// final wallet = await MoneroWallet.create(
+  ///   path: '/path/to/new_wallet',
+  ///   password: 'secure_password',
+  ///   seedType: MoneroSeedType.twentyFive,
+  ///   networkType: 0,
+  /// );
+  /// ```
   static Future<MoneroWallet> create({
     required String path,
     required String password,
@@ -118,7 +151,37 @@ class MoneroWallet extends Wallet {
     return wallet;
   }
 
-  /// 16 word polyseed restores will ignore the [restoreHeight] param.
+  /// Restores a Monero wallet from a mnemonic seed phrase.
+  ///
+  /// ### Parameters:
+  /// - **path** (`String`, required): The file path where the wallet will be stored.
+  /// - **password** (`String`, required): The password used to encrypt the wallet file.
+  /// - **seed** (`String`, required): The mnemonic seed phrase for restoring the wallet.
+  /// - **networkType** (`int`, optional): Specifies the Monero network type to use:
+  ///   - `0`: Mainnet (default)
+  ///   - `1`: Testnet
+  ///   - `2`: Stagenet
+  /// - **restoreHeight** (`int`, optional): The blockchain height from which to start
+  ///   synchronizing the wallet. Defaults to `0`, starting from the genesis block.
+  ///   NOTE: THIS IS ONLY USED BY 25 WORD SEEDS!
+  ///
+  /// ### Returns:
+  /// A `Future` that resolves to an instance of [MoneroWallet] upon successful restoration.
+  ///
+  /// ### Example:
+  /// ```dart
+  /// final wallet = await MoneroWallet.restoreWalletFromSeed(
+  ///   path: '/path/to/wallet',
+  ///   password: 'secure_password',
+  ///   seed: 'mnemonic seed phrase here',
+  ///   networkType: 0,
+  ///   restoreHeight: 200000, // Start from a specific block height
+  /// );
+  /// ```
+  ///
+  /// ### Errors:
+  /// Throws an error if the wallet cannot be restored due to an invalid seed,
+  /// incorrect path, or other issues.
   static Future<MoneroWallet> restoreWalletFromSeed({
     required String path,
     required String password,
@@ -166,6 +229,49 @@ class MoneroWallet extends Wallet {
     return wallet;
   }
 
+  /// Creates a view-only Monero wallet.
+  ///
+  /// This function initializes a view-only [MoneroWallet] instance, which allows the
+  /// user to monitor incoming transactions and view their wallet balance without
+  /// having spending capabilities. This is useful for scenarios where tracking
+  /// wallet activity is required without spending authority.
+  ///
+  /// ### Parameters:
+  /// - **path** (`String`, required): The file path where the view-only wallet will be stored.
+  /// - **password** (`String`, required): The password to encrypt the wallet file.
+  /// - **address** (`String`, required): The public address associated with the wallet.
+  /// - **viewKey** (`String`, required): The private view key, granting read access
+  ///   to the wallet's transaction history.
+  /// - **networkType** (`int`, optional): Specifies the Monero network type:
+  ///   - `0`: Mainnet (default)
+  ///   - `1`: Testnet
+  ///   - `2`: Stagenet
+  /// - **restoreHeight** (`int`, optional): The blockchain height from which to start
+  ///   synchronizing the wallet. Defaults to `0`, starting from the genesis block.
+  ///
+  /// ### Returns:
+  /// A new instance of [MoneroWallet] with view-only access, allowing tracking
+  /// of the specified wallet without spending permissions.
+  ///
+  /// ### Example:
+  /// ```dart
+  /// final viewOnlyWallet = MoneroWallet.createViewOnlyWallet(
+  ///   path: '/path/to/view_only_wallet',
+  ///   password: 'secure_password',
+  ///   address: 'public_address_here',
+  ///   viewKey: 'view_key_here',
+  ///   networkType: 0,
+  ///   restoreHeight: 50000, // Sync from a specific block height
+  /// );
+  /// ```
+  ///
+  /// ### Errors:
+  /// Throws an error if the provided address or view key is invalid, or if the wallet
+  /// cannot be created due to other issues.
+  ///
+  /// ### Notes:
+  /// - This wallet type allows viewing incoming transactions and balance but
+  ///   does not grant spending capability.
   static MoneroWallet createViewOnlyWallet({
     required String path,
     required String password,
@@ -185,6 +291,48 @@ class MoneroWallet extends Wallet {
         restoreHeight: restoreHeight,
       );
 
+  /// Restores a Monero wallet from private keys and address.
+  ///
+  /// This function creates a new [MoneroWallet] instance from the provided
+  /// address, view key, and spend key, allowing recovery of a previously
+  /// existing wallet. Specify the wallet file’s path, password, and optional
+  /// network type and restore height to customize the wallet creation process.
+  ///
+  /// ### Parameters:
+  /// - **path** (`String`, required): The file path where the wallet will be stored.
+  /// - **password** (`String`, required): The password to encrypt the wallet file.
+  /// - **language** (`String`, required): The mnemonic language for any future
+  ///   seed generation.
+  /// - **address** (`String`, required): The public address of the wallet to restore.
+  /// - **viewKey** (`String`, required): The private view key associated with the wallet.
+  /// - **spendKey** (`String`, required): The private spend key associated with the wallet.
+  /// - **networkType** (`int`, optional): Specifies the Monero network type:
+  ///   - `0`: Mainnet (default)
+  ///   - `1`: Testnet
+  ///   - `2`: Stagenet
+  /// - **restoreHeight** (`int`, optional): The blockchain height from which to start
+  ///   synchronizing the wallet. Defaults to `0`, starting from the genesis block.
+  ///
+  /// ### Returns:
+  /// An instance of [MoneroWallet] representing the restored wallet.
+  ///
+  /// ### Example:
+  /// ```dart
+  /// final wallet = MoneroWallet.restoreWalletFromKeys(
+  ///   path: '/path/to/wallet',
+  ///   password: 'secure_password',
+  ///   language: 'English',
+  ///   address: 'public_address_here',
+  ///   viewKey: 'view_key_here',
+  ///   spendKey: 'spend_key_here',
+  ///   networkType: 0,
+  ///   restoreHeight: 100000, // Start syncing from a specific block height
+  /// );
+  /// ```
+  ///
+  /// ### Errors:
+  /// Throws an error if the provided keys or address are invalid, or if the wallet
+  /// cannot be restored due to other issues.
   static MoneroWallet restoreWalletFromKeys({
     required String path,
     required String password,
@@ -214,6 +362,45 @@ class MoneroWallet extends Wallet {
     return wallet;
   }
 
+  /// Restores a Monero wallet and creates a seed from a private spend key.
+  ///
+  /// ### Parameters:
+  /// - **path** (`String`, required): The file path where the wallet will be stored.
+  /// - **password** (`String`, required): The password to encrypt the wallet file.
+  /// - **language** (`String`, required): The mnemonic language for any future
+  ///   seed generation or wallet recovery prompts.
+  /// - **spendKey** (`String`, required): The private spend key associated with the wallet.
+  /// - **networkType** (`int`, optional): Specifies the Monero network type:
+  ///   - `0`: Mainnet (default)
+  ///   - `1`: Testnet
+  ///   - `2`: Stagenet
+  /// - **restoreHeight** (`int`, optional): The blockchain height from which to start
+  ///   synchronizing the wallet. Defaults to `0`, starting from the genesis block.
+  ///
+  /// ### Returns:
+  /// An instance of [MoneroWallet] representing the restored wallet with full access
+  /// to the funds associated with the given spend key.
+  ///
+  /// ### Example:
+  /// ```dart
+  /// final wallet = MoneroWallet.restoreDeterministicWalletFromSpendKey(
+  ///   path: '/path/to/wallet',
+  ///   password: 'secure_password',
+  ///   language: 'English',
+  ///   spendKey: 'spend_key_here',
+  ///   networkType: 0,
+  ///   restoreHeight: 100000, // Start syncing from a specific block height
+  /// );
+  /// ```
+  ///
+  /// ### Errors:
+  /// Throws an error if the provided spend key is invalid, or if the wallet cannot be
+  /// restored due to other I/O issues.
+  ///
+  /// ### Notes:
+  /// - This method is useful for users who have lost their mnemonic seed but still have
+  ///   access to their spend key. It allows for full wallet recovery, including access
+  ///   to balances and transaction history.
   static MoneroWallet restoreDeterministicWalletFromSpendKey({
     required String path,
     required String password,
@@ -228,14 +415,11 @@ class MoneroWallet extends Wallet {
       password: password,
       language: language,
       spendKeyString: spendKey,
-      newWallet: true, // TODO(mrcyjanek): safe to remove
+      newWallet: true,
       restoreHeight: restoreHeight,
     );
 
     xmr_ffi.checkWalletStatus(walletPointer);
-
-    // TODO check if we should grab seed and cache it here?
-    // monero.Wallet_setCacheAttribute(walletPointer, key: "cakewallet.seed", value: seed);
 
     final wallet = MoneroWallet._(walletPointer, path);
     wallet.save();
@@ -243,6 +427,31 @@ class MoneroWallet extends Wallet {
     return wallet;
   }
 
+  /// Loads an existing Monero wallet from the specified path with the provided password.
+  ///
+  /// ### Parameters:
+  /// - **path** (`String`, required): The file path to the existing wallet file to be loaded.
+  /// - **password** (`String`, required): The password used to decrypt the wallet file.
+  /// - **networkType** (`int`, optional): Specifies the Monero network type:
+  ///   - `0`: Mainnet (default)
+  ///   - `1`: Testnet
+  ///   - `2`: Stagenet
+  ///
+  /// ### Returns:
+  /// An instance of [MoneroWallet] representing the loaded wallet.
+  ///
+  /// ### Example:
+  /// ```dart
+  /// final wallet = MoneroWallet.loadWallet(
+  ///   path: '/path/to/existing_wallet',
+  ///   password: 'secure_password',
+  ///   networkType: 0,
+  /// );
+  /// ```
+  ///
+  /// ### Errors:
+  /// Throws an error if the wallet file cannot be found, the password is incorrect,
+  /// or the file cannot be read due to other I/O issues.
   static MoneroWallet loadWallet({
     required String path,
     required String password,

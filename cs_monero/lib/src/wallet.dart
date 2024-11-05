@@ -8,19 +8,24 @@ abstract class Wallet {
   Timer? _pollingTimer;
   final List<WalletListener> _listeners = [];
 
+  /// Add a [WalletListener] to the wallet.
   void addListener(WalletListener listener) {
     _listeners.add(listener);
   }
 
+  /// Remove a [WalletListener] from the wallet.
   void removeListener(WalletListener listener) {
     _listeners.remove(listener);
   }
 
+  /// Returns all [WalletListener]s.
   List<WalletListener> getListeners() => List.unmodifiable(_listeners);
 
   Duration pollingInterval = const Duration(seconds: 5);
 
-  /// Start polling the wallet.
+  /// Start polling the wallet. [WalletListener] objects added to this wallet
+  /// using [addListener] will have their callbacks triggered here as appropriate.
+  ///
   /// Additional calls to [startListeners] will be ignored if it is already running.
   void startListeners() {
     _pollingTimer ??= Timer.periodic(
@@ -37,6 +42,7 @@ abstract class Wallet {
     );
   }
 
+  /// Stop polling the wallet, effectively stopping all listeners.
   void stopListeners() {
     _pollingTimer?.cancel();
     _pollingTimer = null;
@@ -89,8 +95,12 @@ abstract class Wallet {
   }
 
   Timer? _autoSaveTimer;
+
+  /// Configurable interval used when [startAutoSaving] is called.
   Duration autoSaveInterval = const Duration(minutes: 2);
 
+  /// Start periodically calling [save]
+  ///
   /// Will do nothing if wallet is closed.
   /// Auto saving will be cancelled if the wallet is closed.
   void startAutoSaving() {
@@ -110,12 +120,15 @@ abstract class Wallet {
     });
   }
 
+  /// Stop periodically calling [save].
   void stopAutoSaving() {
     _autoSaveTimer?.cancel();
     _autoSaveTimer = null;
   }
 
   // TODO: handle this differently
+  /// Rough fee estimation
+  @Deprecated("Unverified hard coded values used")
   Future<int> estimateFee(TransactionPriority priority, int amount) async {
     // FIXME: hardcoded value;
     switch (priority) {
@@ -234,10 +247,15 @@ abstract class Wallet {
   @protected
   int transactionCount();
 
+  /// Returns the current block height of the wallet. Anything less than the
+  /// [getDaemonHeight] value (+/- 1) likely indicates the wallet is not fully
+  /// synced.
   int getCurrentWalletSyncingHeight();
 
+  /// Returns a rough height estimate for a given [date].
   int getBlockChainHeightByDate(DateTime date);
 
+  /// Initialize and connect to a daemon.
   Future<void> connect({
     required String daemonAddress,
     required bool trusted,
@@ -254,40 +272,77 @@ abstract class Wallet {
   //   String language = "English",
   // });
 
+  /// Returns true if the wallet is a view only wallet.
   bool isViewOnly();
+
   // void setDaemonConnection(DaemonConnection connection);
   // DaemonConnection getDaemonConnection();
   // void setProxyUri(String proxyUri);
+
+  /// Returns true if the wallet has an active daemon connection.
   Future<bool> isConnectedToDaemon();
+
+  /// Returns true if the wallet is fully synced
   Future<bool> isSynced();
+
   // Version getVersion();
   // NetworkType getNetworkType();
+
+  /// Returns the location where the wallet files are stored.
   String getPath();
+
+  /// Returns the seed phrase (mnemonic) of the wallet.
   String getSeed();
+
+  /// Returns the language of the seed phrase (mnemonic).
   String getSeedLanguage();
 
+  /// Returns the private spend key for the wallet.
   String getPrivateSpendKey();
+
+  /// Returns the private view key for the wallet.
   String getPrivateViewKey();
+
+  /// Returns the public spend key for the wallet.
   String getPublicSpendKey();
+
+  /// Returns the public view key for the wallet.
   String getPublicViewKey();
 
+  /// Returns a receiving address given an [accountIndex] and sub[addressIndex].
+  /// If the [addressIndex] is zero, the main address for the given
+  /// [accountIndex] will be returned.
   Address getAddress({int accountIndex = 0, int addressIndex = 0});
 
+  /// Returns the current chain height as seen by the connected daemon.
   int getDaemonHeight();
+
   // int getDaemonMaxPeerHeight();
   // int getApproximateChainHeight();
   // int getHeight();
   // int getHeightByDate(int year, int month, int day);
 
+  /// Returns the height of the wallet used for rescanning/refreshing.
   int getRefreshFromBlockHeight();
+
+  /// Set the height of the wallet used for rescanning/refreshing.
   void setRefreshFromBlockHeight(int startHeight);
+
+  /// Sets the auto refresh interval and starts refreshing/syncing.
   void startSyncing({Duration interval = const Duration(seconds: 20)});
+
+  /// Stop syncing/refreshing
   void stopSyncing();
 
   // Future<bool> rescanSpent();
+
+  /// Rescans the wallet from [getRefreshFromBlockHeight].
   Future<bool> rescanBlockchain();
 
+  /// Returns the wallet's full balance in atomic units.
   BigInt getBalance({int accountIndex = 0});
+
+  /// Returns the wallet's unlocked balance in atomic units.
   BigInt getUnlockedBalance({int accountIndex = 0});
 
   // Disable for now
@@ -298,9 +353,19 @@ abstract class Wallet {
   // void setSubaddressLabel(int accountIdx, int addressIdx, String label);
 
   String getTxKey(String txid);
+
+  /// Returns a transaction given it's [txid]/hash
   Future<Transaction> getTx(String txid, {bool refresh = false});
+
+  /// Returns all wallet transactions
   Future<List<Transaction>> getTxs({bool refresh = false});
+
   // List<Transfer> getTransfers({int? accountIdx, int? subaddressIdx});
+
+  /// Returns all known wallet outputs.
+  /// Use the [includeSpent] flag to ignore used outputs if desired.
+  /// Setting [refresh] to true will ensure the internal outputs state is
+  /// refreshed before fetching.
   Future<List<Output>> getOutputs({
     bool includeSpent = false,
     bool refresh = false,
@@ -309,9 +374,15 @@ abstract class Wallet {
   Future<bool> exportKeyImages({required String filename, bool all = false});
   Future<bool> importKeyImages({required String filename});
 
+  /// Freeze an output given it's [keyImage]. Renders the output un-spendable.
   Future<void> freezeOutput(String keyImage);
+
+  /// Un freeze a frozen output.
   Future<void> thawOutput(String keyImage);
 
+  /// Create a single recipient transaction.
+  ///
+  /// Returns a [PendingTransaction], required for [commitTx].
   Future<PendingTransaction> createTx({
     required Recipient output,
     required TransactionPriority priority,
@@ -321,6 +392,9 @@ abstract class Wallet {
     bool sweep = false,
   });
 
+  /// Create a multi recipient transaction.
+  ///
+  /// Returns a [PendingTransaction], required for [commitTx].
   Future<PendingTransaction> createTxMultiDest({
     required List<Recipient> outputs,
     required TransactionPriority priority,
@@ -339,6 +413,7 @@ abstract class Wallet {
   // String relayTx(Tx tx);
   // List<String> submitTxs(String signedTxHex);
 
+  /// Commit/broadcast a transaction to the network.
   Future<void> commitTx(PendingTransaction tx);
 
   // Future<String> signMessage(
@@ -347,16 +422,22 @@ abstract class Wallet {
   //   int accountIdx,
   //   int subaddressIdx,
   // );
+
+  /// Sign a message
   Future<String> signMessage(
     String message,
     String address,
   );
+
+  /// Verify a signed message
   Future<bool> verifyMessage(
     String message,
     String address,
     String signature,
   );
 
+  /// Convert a decimal amount string to atomic units.
+  /// Returns null on invalid string format.
   BigInt? amountFromString(String value);
 
   // String getTxKey(String txId);
@@ -407,9 +488,19 @@ abstract class Wallet {
   // List<String> submitMultisig(String signedMultisigHex);
 
   // void moveTo(String path);
+
+  /// Returns the wallet password.
   String getPassword();
+
+  /// Change the password of the wallet
   void changePassword(String newPassword);
+
+  /// Saves the current state of the wallet to disk.
   Future<void> save();
+
+  /// Close the wallet. If [save] is true, [save] will be called before closing.
   Future<void> close({bool save = false});
+
+  /// A flag to check if the wallet is closed.
   bool isClosed();
 }
