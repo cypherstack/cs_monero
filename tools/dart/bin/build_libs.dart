@@ -199,7 +199,7 @@ void main(List<String> args) async {
       final sspPath = "$envMoneroCDir"
           "${Platform.pathSeparator}release"
           "${Platform.pathSeparator}wownero"
-          "${Platform.pathSeparator}x86_64-w64-mingw32_libssp.dll";
+          "${Platform.pathSeparator}x86_64-w64-mingw32_libssp-0.dll";
 
       if (File("$sspPath.xz").existsSync()) {
         await runAsync("unxz", ["-f", "$sspPath.xz"]);
@@ -216,7 +216,7 @@ void main(List<String> args) async {
       final pThreadPath = "$envMoneroCDir"
           "${Platform.pathSeparator}release"
           "${Platform.pathSeparator}wownero"
-          "${Platform.pathSeparator}x86_64-w64-mingw32_libwinpthread.dll";
+          "${Platform.pathSeparator}x86_64-w64-mingw32_libwinpthread-1.dll";
 
       if (File("$sspPath.xz").existsSync()) {
         await runAsync("unxz", ["-f", "$pThreadPath.xz"]);
