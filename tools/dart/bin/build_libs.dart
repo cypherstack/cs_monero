@@ -218,7 +218,7 @@ void main(List<String> args) async {
           "${Platform.pathSeparator}wownero"
           "${Platform.pathSeparator}x86_64-w64-mingw32_libwinpthread-1.dll";
 
-      if (File("$sspPath.xz").existsSync()) {
+      if (File("$pThreadPath.xz").existsSync()) {
         await runAsync("unxz", ["-f", "$pThreadPath.xz"]);
       }
       await runAsync(
