@@ -1,6 +1,8 @@
 # About
-- A sado not trust the binaries hosted on https://pub.dev you can build from
-source.  Refer to [`cs_monero/cs_monero/README.md`](https://github.com/cypherstack/cs_monero/tree/main/cs_monero/README.md)
+- A simplified Flutter/Dart Monero (and Wownero) wallet library.
+- Uses https://github.com/MrCyjaneK/monero_c/ for the compiled native libs.
+- If you do not trust the binaries hosted on https://pub.dev you can build from
+  source. Refer to [`cs_monero/README.md`](https://github.com/cypherstack/cs_monero/tree/main/cs_monero/README.md).
 
 ## Quickstart
 1. Add to pubspec.yaml
@@ -11,15 +13,35 @@ source.  Refer to [`cs_monero/cs_monero/README.md`](https://github.com/cyphersta
     ```
 2. Create a wallet
    ```dart
-     final wallet = MoneroWallet.create(
+   final wallet = await MoneroWallet.create(
      path: "somePath", // Path to wallet files will be saved,
      password: "SomeSecurePassword", // Your wallet files are only as secure as this password.  This cannot be recovered if lost!
      language: "English", // Seed language.
      seedType: MoneroSeedType.sixteen, // 16 word polyseed or MoneroSeedType.twentyFive for legacy seed format.
      networkType: 0, // Mainnet.
    );
+
+    // Init a connection
+    await wallet.connect(
+      daemonAddress: "daemonAddress",
+      trusted: true,
+    );
     
-   Address? address = wallet.getAddress();
+    // get main wallet address for account 0
+    final address = wallet.getAddress();
+    
+    // create a tx
+    final pendingTx = await wallet.createTx(
+      output: Recipient(
+        address: "address",
+        amount: BigInt.from(100000000),
+      ),
+      priority: TransactionPriority.normal,
+      accountIndex: 0,
+    );
+    
+    // broadcast/commit tx to network
+    await wallet.commitTx(pendingTx);
    ```
 
 ## Known Limitations
