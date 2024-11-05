@@ -1,24 +1,7 @@
-import '../enums/min_confirms.dart';
+import '../../cs_monero.dart';
 
+/// Represents a Monero (or Wownero) transaction for a given wallet.
 class Transaction {
-  final String displayLabel;
-  final String description;
-  final BigInt fee;
-  final int confirmations;
-  final int blockHeight;
-  final Set<int> addressIndexes;
-  final int accountIndex;
-  final String paymentId;
-  final BigInt amount;
-  final bool isSpend;
-  final DateTime timeStamp;
-  final String hash;
-  final String key;
-  final MinConfirms minConfirms;
-
-  bool get isConfirmed => !isPending;
-  bool get isPending => confirmations < minConfirms.value;
-
   Transaction({
     required this.displayLabel,
     required this.description,
@@ -34,5 +17,58 @@ class Transaction {
     required this.key,
     required this.timeStamp,
     required this.minConfirms,
-  });
+  }) {
+    if (fee.isNegative) throw Exception("negative fee");
+    if (confirmations.isNegative) throw Exception("negative confirmations");
+    if (accountIndex.isNegative) throw Exception("negative accountIndex");
+    if (amount.isNegative) throw Exception("negative amount");
+  }
+
+  /// A label to display for the transaction, providing a human-readable identifier.
+  final String displayLabel;
+
+  /// A description of the transaction, providing additional context or details.
+  final String description;
+
+  /// The transaction fee in atomic units.
+  final BigInt fee;
+
+  /// The number of confirmations this transaction has received.
+  final int confirmations;
+
+  /// The block height at which this transaction was included.
+  final int blockHeight;
+
+  /// A set of indexes corresponding to addresses associated with this transaction.
+  final Set<int> addressIndexes;
+
+  /// The index of the account associated with this transaction.
+  final int accountIndex;
+
+  /// An optional payment identifier, used to associate this transaction with a payment.
+  final String paymentId;
+
+  /// The amount of funds transferred in this transaction, represented in atomic units.
+  final BigInt amount;
+
+  /// Flag indicating whether this transaction is a spend transaction.
+  final bool isSpend;
+
+  /// The timestamp of when this transaction was created or recorded.
+  final DateTime timeStamp;
+
+  /// The unique hash of this transaction (txid).
+  final String hash;
+
+  /// A key used for transaction signing or authentication.
+  final String key;
+
+  /// The minimum number of confirmations required for this transaction.
+  final MinConfirms minConfirms;
+
+  /// Flag indicating whether the transaction is confirmed.
+  bool get isConfirmed => !isPending;
+
+  /// Flag indicating whether the transaction is pending (i.e., not yet confirmed).
+  bool get isPending => confirmations < minConfirms.value;
 }
