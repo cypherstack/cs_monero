@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'views/create_view_only_wallet_view.dart';
 import 'views/create_wallet_view.dart';
 import 'views/open_wallet_view.dart';
+import 'views/restore_deterministic_from_spend_key_view.dart';
 import 'views/restore_from_keys_view.dart';
 import 'views/restore_from_seed_view.dart';
 
@@ -106,6 +107,17 @@ class _ExampleAppState extends State<ExampleApp> {
                     );
                   },
                   child: const Text("Restore from keys"),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<dynamic>(
+                        builder: (context) =>
+                            const RestoreDeterministicFromSpendKeyView(),
+                      ),
+                    );
+                  },
+                  child: const Text("Restore deterministic from spend key"),
                 ),
                 TextButton(
                   onPressed: () {
