@@ -1,5 +1,9 @@
 Copyright 2024 Cypher Stack LLC
 
+Portions of this software are derived from the `monero_c` library, which is
+licensed under the LGPL.  The `monero_c` code is subject to its own LGPL terms
+and conditions.  See https://github.com/MrCyjaneK/monero_c/blob/master/LICENSE
+
 MIT LICENSE
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -8,6 +12,10 @@ in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
+
+1. This software includes portions from the `monero_c` library under LGPL;
+   any modified versions of this software that rely on LGPL components must
+   comply with the LGPL terms for those components.
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
