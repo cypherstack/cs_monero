@@ -60,7 +60,7 @@ class Transaction {
   /// The unique hash of this transaction (txid).
   final String hash;
 
-  /// A key used for transaction signing or authentication.
+  /// A key used to prove a transaction was made and relayed and to verify its details.
   final String key;
 
   /// The minimum number of confirmations required for this transaction.
