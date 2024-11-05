@@ -10,10 +10,11 @@ void main() {
       final String message = "Syncing...";
 
       final listener = WalletListener(
-        onSyncingUpdate: (
-            {required int syncHeight,
-            required int nodeHeight,
-            String? message}) {
+        onSyncingUpdate: ({
+          required int syncHeight,
+          required int nodeHeight,
+          String? message,
+        }) {
           callbackInvoked = true;
           expect(syncHeight, 5);
           expect(nodeHeight, 10);
@@ -22,7 +23,10 @@ void main() {
       );
 
       listener.onSyncingUpdate!(
-          syncHeight: syncHeight, nodeHeight: nodeHeight, message: message);
+        syncHeight: syncHeight,
+        nodeHeight: nodeHeight,
+        message: message,
+      );
       expect(callbackInvoked, true);
     });
 
@@ -47,8 +51,10 @@ void main() {
       final BigInt newUnlockedBalance = BigInt.from(800);
 
       final listener = WalletListener(
-        onBalancesChanged: (
-            {required BigInt newBalance, required BigInt newUnlockedBalance}) {
+        onBalancesChanged: ({
+          required BigInt newBalance,
+          required BigInt newUnlockedBalance,
+        }) {
           callbackInvoked = true;
           expect(newBalance, BigInt.from(1000));
           expect(newUnlockedBalance, BigInt.from(800));
@@ -56,13 +62,15 @@ void main() {
       );
 
       listener.onBalancesChanged!(
-          newBalance: newBalance, newUnlockedBalance: newUnlockedBalance);
+        newBalance: newBalance,
+        newUnlockedBalance: newUnlockedBalance,
+      );
       expect(callbackInvoked, true);
     });
 
     test('should invoke onError callback with correct parameters', () {
       bool callbackInvoked = false;
-      final Object? error = "An error occurred";
+      final Object error = "An error occurred";
       final StackTrace stackTrace = StackTrace.current;
 
       final listener = WalletListener(
@@ -81,13 +89,16 @@ void main() {
       final listener = WalletListener(); // No callbacks provided
 
       // These calls should not throw an exception
-      expect(() => listener.onSyncingUpdate?.call(syncHeight: 0, nodeHeight: 0),
-          returnsNormally);
+      expect(
+        () => listener.onSyncingUpdate?.call(syncHeight: 0, nodeHeight: 0),
+        returnsNormally,
+      );
       expect(() => listener.onNewBlock?.call(0), returnsNormally);
       expect(
-          () => listener.onBalancesChanged
-              ?.call(newBalance: BigInt.zero, newUnlockedBalance: BigInt.zero),
-          returnsNormally);
+        () => listener.onBalancesChanged
+            ?.call(newBalance: BigInt.zero, newUnlockedBalance: BigInt.zero),
+        returnsNormally,
+      );
       expect(() => listener.onError?.call(null, null), returnsNormally);
     });
   });
