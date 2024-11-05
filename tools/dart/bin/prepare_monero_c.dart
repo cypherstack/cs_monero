@@ -18,7 +18,7 @@ void main() async {
     // Clone the monero_c repository
     await runAsync('git', [
       'clone',
-      'https://github.com/cypherstack/monero_c',
+      kMoneroCRepo,
       '--branch',
       'apple-frameworks',
     ]);
