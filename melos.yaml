@@ -31,21 +31,6 @@ command:
       meta: ^1.15.0
       plugin_platform_interface: ^2.0.2
 
-      # shared interface for federated plugins below
-      cs_monero_flutter_libs_platform_interface: 0.0.1-dev.1
-
-      # separated bins bins by platform to get around pub.dev size limit
-      cs_monero_flutter_libs_android: 0.0.1-dev.0
-      cs_monero_flutter_libs_ios: 0.0.1-dev.0
-      cs_monero_flutter_libs_linux: 0.0.1-dev.0
-      cs_monero_flutter_libs_macos: 0.0.1-dev.0
-      cs_monero_flutter_libs_windows: 0.0.1-dev.0
-
-      # separated android bins by arch to get around pub.dev size limit
-      cs_monero_flutter_libs_android_x86_64: 0.0.1-dev.0
-      cs_monero_flutter_libs_android_arm64_v8a: 0.0.1-dev.0
-      cs_monero_flutter_libs_android_armeabi_v7a: 0.0.1-dev.0
-
     dev_dependencies:
       lints: ^4.0.0
       test: ^1.24.0
