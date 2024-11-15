@@ -47,77 +47,77 @@ packages:
       path: "../cs_monero"
       relative: true
     source: path
-    version: "0.0.1-dev.0"
+    version: "1.0.0-pre"
   cs_monero_flutter_libs:
     dependency: "direct main"
     description:
       path: "../cs_monero_flutter_libs"
       relative: true
     source: path
-    version: "0.0.1-dev.0"
+    version: "1.0.0-pre"
   cs_monero_flutter_libs_android:
     dependency: "direct overridden"
     description:
       path: "../cs_monero_flutter_libs_android"
       relative: true
     source: path
-    version: "0.0.1-dev.0"
+    version: "1.0.0-pre"
   cs_monero_flutter_libs_android_arm64_v8a:
     dependency: "direct overridden"
     description:
       path: "../cs_monero_flutter_libs_android_arm64_v8a"
       relative: true
     source: path
-    version: "0.0.1-dev.0"
+    version: "1.0.0-pre"
   cs_monero_flutter_libs_android_armeabi_v7a:
     dependency: "direct overridden"
     description:
       path: "../cs_monero_flutter_libs_android_armeabi_v7a"
       relative: true
     source: path
-    version: "0.0.1-dev.0"
+    version: "1.0.0-pre"
   cs_monero_flutter_libs_android_x86_64:
     dependency: "direct overridden"
     description:
       path: "../cs_monero_flutter_libs_android_x86_64"
       relative: true
     source: path
-    version: "0.0.1-dev.0"
+    version: "1.0.0-pre"
   cs_monero_flutter_libs_ios:
     dependency: "direct overridden"
     description:
       path: "../cs_monero_flutter_libs_ios"
       relative: true
     source: path
-    version: "0.0.1-dev.0"
+    version: "1.0.0-pre"
   cs_monero_flutter_libs_linux:
     dependency: "direct overridden"
     description:
       path: "../cs_monero_flutter_libs_linux"
       relative: true
     source: path
-    version: "0.0.1-dev.0"
+    version: "1.0.0-pre"
   cs_monero_flutter_libs_macos:
     dependency: "direct overridden"
     description:
       path: "../cs_monero_flutter_libs_macos"
       relative: true
     source: path
-    version: "0.0.1-dev.0"
+    version: "1.0.0-pre"
   cs_monero_flutter_libs_platform_interface:
     dependency: "direct overridden"
     description:
       path: "../cs_monero_flutter_libs_platform_interface"
       relative: true
     source: path
-    version: "0.0.1-dev.1"
+    version: "1.0.0-pre"
   cs_monero_flutter_libs_windows:
     dependency: "direct overridden"
     description:
       path: "../cs_monero_flutter_libs_windows"
       relative: true
     source: path
-    version: "0.0.1-dev.0"
+    version: "1.0.0-pre"
   fake_async:
     dependency: transitive
     description:
