@@ -16,9 +16,11 @@ void main() {
       expect(deserializedTx.vin.length, equals(2));
       final vin0 = deserializedTx.vin[0] as TxinToKey;
       expect(
-          _bytesToHex(vin0.keyImage),
-          equals(
-              'bbe60f26734f9d37abbc262cfa6013a82e3a99360e82c66285c99bebd0bfdb50'));
+        _bytesToHex(vin0.keyImage),
+        equals(
+          'bbe60f26734f9d37abbc262cfa6013a82e3a99360e82c66285c99bebd0bfdb50',
+        ),
+      );
       expect(
         vin0.keyOffsets,
         equals([
@@ -37,15 +39,17 @@ void main() {
           BigInt.from(38570),
           BigInt.from(3021),
           BigInt.from(46167),
-          BigInt.from(891)
+          BigInt.from(891),
         ]),
       );
 
       final vin1 = deserializedTx.vin[1] as TxinToKey;
       expect(
-          _bytesToHex(vin1.keyImage),
-          equals(
-              '7bb542d92e3e2e820aed8b95cad83b1cb76023e22d1720c2f8c4428d82fe3011'));
+        _bytesToHex(vin1.keyImage),
+        equals(
+          '7bb542d92e3e2e820aed8b95cad83b1cb76023e22d1720c2f8c4428d82fe3011',
+        ),
+      );
       expect(
         vin1.keyOffsets,
         equals([
@@ -64,7 +68,7 @@ void main() {
           BigInt.from(12477),
           BigInt.from(60830),
           BigInt.from(2525),
-          BigInt.from(343)
+          BigInt.from(343),
         ]),
       );
 
@@ -72,40 +76,52 @@ void main() {
       final vout0 = deserializedTx.vout[0];
       final target0 = vout0.target as TxoutToKey;
       expect(
-          _bytesToHex(target0.key),
-          equals(
-              '03c001ac2490c11c15a878f3502bf2173a4a7246f6fdf583476c08bba67cc3c2'));
+        _bytesToHex(target0.key),
+        equals(
+          '03c001ac2490c11c15a878f3502bf2173a4a7246f6fdf583476c08bba67cc3c2',
+        ),
+      );
 
       final vout1 = deserializedTx.vout[1];
       final target1 = vout1.target as TxoutToKey;
       expect(
-          _bytesToHex(target1.key),
-          equals(
-              '0003ddc101b6f11ba9bec48c9b726249d5e24e8007cd65e180c0e3ace99ba810'));
+        _bytesToHex(target1.key),
+        equals(
+          '0003ddc101b6f11ba9bec48c9b726249d5e24e8007cd65e180c0e3ace99ba810',
+        ),
+      );
 
       final vout2 = deserializedTx.vout[2];
       final target2 = vout2.target as TxoutToKey;
       expect(
-          _bytesToHex(target2.key),
-          equals(
-              '3a0003edc933be5a907f216b5ebf82adcde4d148d108c3db32c32ffe5f04e6d6'));
+        _bytesToHex(target2.key),
+        equals(
+          '3a0003edc933be5a907f216b5ebf82adcde4d148d108c3db32c32ffe5f04e6d6',
+        ),
+      );
 
       final vout3 = deserializedTx.vout[3];
       final target3 = vout3.target as TxoutToKey;
       expect(
-          _bytesToHex(target3.key),
-          equals(
-              'fd0003e05e5869ddd5a17e33446ee80127f39a0082c6711998d81093d9fbe3f1'));
+        _bytesToHex(target3.key),
+        equals(
+          'fd0003e05e5869ddd5a17e33446ee80127f39a0082c6711998d81093d9fbe3f1',
+        ),
+      );
 
       // Validate extraFields
-      expect(deserializedTx.extraFields.length,
-          greaterThan(0)); // At least 1 field
+      expect(
+        deserializedTx.extraFields.length,
+        greaterThan(0),
+      ); // At least 1 field
       final extraPubKey = deserializedTx.extraFields
           .firstWhere((field) => field is TxExtraPubKey) as TxExtraPubKey;
       expect(
-          _bytesToHex(extraPubKey.pubKey),
-          equals(
-              '01e16fe189b4f9c244e8ff97ff92c6ba177e124f356d589515371cab5314c870'));
+        _bytesToHex(extraPubKey.pubKey),
+        equals(
+          '01e16fe189b4f9c244e8ff97ff92c6ba177e124f356d589515371cab5314c870',
+        ),
+      );
     });
   });
 }
