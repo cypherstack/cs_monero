@@ -18,6 +18,10 @@ abstract class TxInput {
   }
 }
 
+/// Represents a coinbase input in a Monero transaction.
+///
+/// Coinbase inputs creates new coins which have no previous outputs and are
+/// otherwise identified by the block height from which they were created.
 class TxinGen extends TxInput {
   final BigInt height;
 
@@ -29,6 +33,14 @@ class TxinGen extends TxInput {
   }
 }
 
+/// Represents a key-based input in a Monero transaction.
+///
+/// A key-based input is used to spend a previously created output. It
+/// contains information necessary to prove the output ownership and spend it:
+/// - [amount]: The amount being spent (in atomic units).
+/// - [keyOffsets]: A list of offsets into the blockchain output indices, used
+///   to construct the ring signature for anonymity.
+/// - [keyImage]: A cryptographic key image which prevents double-spends.
 class TxinToKey extends TxInput {
   final BigInt amount;
   final List<BigInt> keyOffsets;
