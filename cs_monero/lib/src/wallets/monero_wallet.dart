@@ -10,10 +10,7 @@ import '../ffi_bindings/monero_wallet_manager_bindings.dart' as xmr_wm_ffi;
 
 class MoneroWallet extends Wallet {
   // internal constructor
-  MoneroWallet._(Pointer<Void> pointer, String path)
-      : _walletPointer = pointer,
-        _path = path;
-  final String _path;
+  MoneroWallet._(Pointer<Void> pointer) : _walletPointer = pointer;
 
   // shared pointer
   static Pointer<Void>? _walletManagerPointerCached;
@@ -29,9 +26,6 @@ class MoneroWallet extends Wallet {
       return _walletManagerPointerCached!.address;
     })(),
   );
-
-  // internal map of wallets
-  static final Map<String, MoneroWallet> _openedWalletsByPath = {};
 
   // instance pointers
   Pointer<Void>? _coinsPointer;
@@ -146,8 +140,7 @@ class MoneroWallet extends Wallet {
       xmr_ffi.storeWallet(Pointer.fromAddress(address), path: path);
     });
 
-    final wallet = MoneroWallet._(walletPointer, path);
-    _openedWalletsByPath[path] = wallet;
+    final wallet = MoneroWallet._(walletPointer);
     return wallet;
   }
 
@@ -224,8 +217,7 @@ class MoneroWallet extends Wallet {
       xmr_ffi.storeWallet(Pointer.fromAddress(address), path: path);
     });
 
-    final wallet = MoneroWallet._(walletPointer, path);
-    _openedWalletsByPath[path] = wallet;
+    final wallet = MoneroWallet._(walletPointer);
     return wallet;
   }
 
@@ -357,8 +349,7 @@ class MoneroWallet extends Wallet {
 
     xmr_ffi.checkWalletStatus(walletPointer);
 
-    final wallet = MoneroWallet._(walletPointer, path);
-    _openedWalletsByPath[path] = wallet;
+    final wallet = MoneroWallet._(walletPointer);
     return wallet;
   }
 
@@ -417,13 +408,13 @@ class MoneroWallet extends Wallet {
       spendKeyString: spendKey,
       newWallet: true,
       restoreHeight: restoreHeight,
+      networkType: networkType,
     );
 
     xmr_ffi.checkWalletStatus(walletPointer);
 
-    final wallet = MoneroWallet._(walletPointer, path);
+    final wallet = MoneroWallet._(walletPointer);
     wallet.save();
-    _openedWalletsByPath[path] = wallet;
     return wallet;
   }
 
@@ -457,25 +448,17 @@ class MoneroWallet extends Wallet {
     required String password,
     int networkType = 0,
   }) {
-    MoneroWallet? wallet = _openedWalletsByPath[path];
-    if (wallet != null) {
-      return wallet;
-    }
+    final walletPointer = xmr_wm_ffi.openWallet(
+      _walletManagerPointer,
+      path: path,
+      password: password,
+      networkType: networkType,
+    );
 
-    try {
-      final walletPointer = xmr_wm_ffi.openWallet(
-        _walletManagerPointer,
-        path: path,
-        password: password,
-      );
-      wallet = MoneroWallet._(walletPointer, path);
-      _openedWalletsByPath[path] = wallet;
-    } catch (e, s) {
-      Logging.log?.e("", error: e, stackTrace: s);
-      rethrow;
-    }
+    xmr_ffi.checkWalletStatus(walletPointer);
 
-    xmr_ffi.checkWalletStatus(wallet._getWalletPointer());
+    final wallet = MoneroWallet._(walletPointer);
+
     return wallet;
   }
 
@@ -1220,7 +1203,6 @@ class MoneroWallet extends Wallet {
 
     xmr_wm_ffi.closeWallet(_walletManagerPointer, _getWalletPointer(), save);
     _walletPointer = null;
-    _openedWalletsByPath.remove(_path);
     isClosing = false;
   }
 
