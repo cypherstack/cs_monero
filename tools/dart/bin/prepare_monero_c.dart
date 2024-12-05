@@ -34,12 +34,12 @@ void main() async {
     await runAsync('git', [
       'config',
       'submodule.libs/wownero.url',
-      'https://git.cypherstack.com/Cypher_Stack/wownero',
+      'https://git.cypherstack.com/cypherstack/wownero',
     ]);
     await runAsync('git', [
       'config',
       'submodule.libs/wownero-seed.url',
-      'https://git.cypherstack.com/Cypher_Stack/wownero-seed',
+      'https://git.cypherstack.com/cypherstack/wownero-seed',
     ]);
 
     // Update submodules
