@@ -113,6 +113,7 @@ class WowneroWallet extends Wallet {
     int networkType = 0,
     bool overrideDeprecated14WordSeedException = false,
   }) async {
+    final walletManagerPointerAddress = _walletManagerPointer.address;
     final Pointer<Void> walletPointer;
 
     switch (seedType) {
@@ -147,25 +148,37 @@ class WowneroWallet extends Wallet {
 
       case WowneroSeedType.sixteen:
         final seed = wow_ffi.createPolyseed(language: language);
-        walletPointer = wow_wm_ffi.createWalletFromPolyseed(
-          _walletManagerPointer,
-          path: path,
-          password: password,
-          mnemonic: seed,
-          seedOffset: "",
-          newWallet: true,
-          restoreHeight: 0, // ignored by core underlying code
-          kdfRounds: 1,
+        walletPointer = Pointer<Void>.fromAddress(
+          await Isolate.run(
+            () => wow_wm_ffi
+                .createWalletFromPolyseed(
+                  Pointer.fromAddress(walletManagerPointerAddress),
+                  path: path,
+                  password: password,
+                  mnemonic: seed,
+                  seedOffset: "",
+                  newWallet: true,
+                  restoreHeight: 0, // ignored by core underlying code
+                  kdfRounds: 1,
+                )
+                .address,
+          ),
         );
         break;
 
       case WowneroSeedType.twentyFive:
-        walletPointer = wow_wm_ffi.createWallet(
-          _walletManagerPointer,
-          path: path,
-          password: password,
-          language: language,
-          networkType: networkType,
+        walletPointer = Pointer<Void>.fromAddress(
+          await Isolate.run(
+            () => wow_wm_ffi
+                .createWallet(
+                  Pointer.fromAddress(walletManagerPointerAddress),
+                  path: path,
+                  password: password,
+                  language: language,
+                  networkType: networkType,
+                )
+                .address,
+          ),
         );
         break;
     }
@@ -215,29 +228,42 @@ class WowneroWallet extends Wallet {
     int networkType = 0,
     int restoreHeight = 0,
   }) async {
+    final walletManagerPointerAddress = _walletManagerPointer.address;
     final Pointer<Void> walletPointer;
     final seedLength = seed.split(' ').length;
     if (seedLength == 25) {
-      walletPointer = wow_wm_ffi.recoveryWallet(
-        _walletManagerPointer,
-        path: path,
-        password: password,
-        mnemonic: seed,
-        restoreHeight: restoreHeight,
-        seedOffset: "",
-        networkType: networkType,
+      walletPointer = Pointer<Void>.fromAddress(
+        await Isolate.run(
+          () => wow_wm_ffi
+              .recoveryWallet(
+                Pointer.fromAddress(walletManagerPointerAddress),
+                path: path,
+                password: password,
+                mnemonic: seed,
+                restoreHeight: restoreHeight,
+                seedOffset: "",
+                networkType: networkType,
+              )
+              .address,
+        ),
       );
     } else if (seedLength == 16) {
-      walletPointer = wow_wm_ffi.createWalletFromPolyseed(
-        _walletManagerPointer,
-        path: path,
-        password: password,
-        mnemonic: seed,
-        seedOffset: "",
-        newWallet: false,
-        restoreHeight: 0, // ignored by core underlying code
-        kdfRounds: 1,
-        networkType: networkType,
+      walletPointer = Pointer<Void>.fromAddress(
+        await Isolate.run(
+          () => wow_wm_ffi
+              .createWalletFromPolyseed(
+                Pointer.fromAddress(walletManagerPointerAddress),
+                path: path,
+                password: password,
+                mnemonic: seed,
+                seedOffset: "",
+                newWallet: false,
+                restoreHeight: 0, // ignored by core underlying code
+                kdfRounds: 1,
+                networkType: networkType,
+              )
+              .address,
+        ),
       );
     } else if (seedLength == 14) {
       walletPointer = wow_ffi.restore14WordSeed(
@@ -311,15 +337,15 @@ class WowneroWallet extends Wallet {
   /// ### Notes:
   /// - This wallet type allows viewing incoming transactions and balance but
   ///   does not grant spending capability.
-  static WowneroWallet createViewOnlyWallet({
+  static Future<WowneroWallet> createViewOnlyWallet({
     required String path,
     required String password,
     required String address,
     required String viewKey,
     int networkType = 0,
     int restoreHeight = 0,
-  }) =>
-      restoreWalletFromKeys(
+  }) async =>
+      await restoreWalletFromKeys(
         path: path,
         password: password,
         language: "", // not used when the viewKey is not empty
@@ -372,7 +398,7 @@ class WowneroWallet extends Wallet {
   /// ### Errors:
   /// Throws an error if the provided keys or address are invalid, or if the wallet
   /// cannot be restored due to other issues.
-  static WowneroWallet restoreWalletFromKeys({
+  static Future<WowneroWallet> restoreWalletFromKeys({
     required String path,
     required String password,
     required String language,
@@ -381,17 +407,24 @@ class WowneroWallet extends Wallet {
     required String spendKey,
     int networkType = 0,
     int restoreHeight = 0,
-  }) {
-    final walletPointer = wow_wm_ffi.createWalletFromKeys(
-      _walletManagerPointer,
-      path: path,
-      password: password,
-      language: language,
-      addressString: address,
-      viewKeyString: viewKey,
-      spendKeyString: spendKey,
-      networkType: networkType,
-      restoreHeight: restoreHeight,
+  }) async {
+    final walletManagerPointerAddress = _walletManagerPointer.address;
+    final walletPointer = Pointer<Void>.fromAddress(
+      await Isolate.run(
+        () => wow_wm_ffi
+            .createWalletFromKeys(
+              Pointer.fromAddress(walletManagerPointerAddress),
+              path: path,
+              password: password,
+              language: language,
+              addressString: address,
+              viewKeyString: viewKey,
+              spendKeyString: spendKey,
+              networkType: networkType,
+              restoreHeight: restoreHeight,
+            )
+            .address,
+      ),
     );
 
     wow_ffi.checkWalletStatus(walletPointer);
@@ -439,29 +472,36 @@ class WowneroWallet extends Wallet {
   /// - This method is useful for users who have lost their mnemonic seed but still have
   ///   access to their spend key. It allows for full wallet recovery, including access
   ///   to balances and transaction history.
-  static WowneroWallet restoreDeterministicWalletFromSpendKey({
+  static Future<WowneroWallet> restoreDeterministicWalletFromSpendKey({
     required String path,
     required String password,
     required String language,
     required String spendKey,
     int networkType = 0,
     int restoreHeight = 0,
-  }) {
-    final walletPointer = wow_wm_ffi.createDeterministicWalletFromSpendKey(
-      _walletManagerPointer,
-      path: path,
-      password: password,
-      language: language,
-      spendKeyString: spendKey,
-      newWallet: true,
-      restoreHeight: restoreHeight,
-      networkType: networkType,
+  }) async {
+    final walletManagerPointerAddress = _walletManagerPointer.address;
+    final walletPointer = Pointer<Void>.fromAddress(
+      await Isolate.run(
+        () => wow_wm_ffi
+            .createDeterministicWalletFromSpendKey(
+              Pointer.fromAddress(walletManagerPointerAddress),
+              path: path,
+              password: password,
+              language: language,
+              spendKeyString: spendKey,
+              newWallet: true,
+              restoreHeight: restoreHeight,
+              networkType: networkType,
+            )
+            .address,
+      ),
     );
 
     wow_ffi.checkWalletStatus(walletPointer);
 
     final wallet = WowneroWallet._(walletPointer);
-    wallet.save();
+    await wallet.save();
     return wallet;
   }
 
@@ -490,16 +530,23 @@ class WowneroWallet extends Wallet {
   /// ### Errors:
   /// Throws an error if the wallet file cannot be found, the password is incorrect,
   /// or the file cannot be read due to other I/O issues.
-  static WowneroWallet loadWallet({
+  static Future<WowneroWallet> loadWallet({
     required String path,
     required String password,
     int networkType = 0,
-  }) {
-    final walletPointer = wow_wm_ffi.openWallet(
-      _walletManagerPointer,
-      path: path,
-      password: password,
-      networkType: networkType,
+  }) async {
+    final walletManagerPointerAddress = _walletManagerPointer.address;
+    final walletPointer = Pointer<Void>.fromAddress(
+      await Isolate.run(
+        () => wow_wm_ffi
+            .openWallet(
+              Pointer.fromAddress(walletManagerPointerAddress),
+              path: path,
+              password: password,
+              networkType: networkType,
+            )
+            .address,
+      ),
     );
 
     wow_ffi.checkWalletStatus(walletPointer);

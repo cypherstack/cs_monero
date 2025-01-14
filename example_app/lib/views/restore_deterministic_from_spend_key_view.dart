@@ -46,7 +46,7 @@ class _RestoreDeterministicFromSpendKeyViewState
       final Wallet wallet;
       switch (type) {
         case "monero":
-          wallet = MoneroWallet.restoreDeterministicWalletFromSpendKey(
+          wallet = await MoneroWallet.restoreDeterministicWalletFromSpendKey(
             path: path,
             password: password,
             spendKey: spendKeyController.text,
@@ -56,7 +56,7 @@ class _RestoreDeterministicFromSpendKeyViewState
           break;
 
         case "wownero":
-          wallet = WowneroWallet.restoreDeterministicWalletFromSpendKey(
+          wallet = await WowneroWallet.restoreDeterministicWalletFromSpendKey(
             path: path,
             password: password,
             spendKey: spendKeyController.text,

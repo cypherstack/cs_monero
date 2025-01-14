@@ -46,7 +46,7 @@ class _RestoreFromKeysViewState extends State<RestoreFromKeysView> {
       final Wallet wallet;
       switch (type) {
         case "monero":
-          wallet = MoneroWallet.restoreWalletFromKeys(
+          wallet = await MoneroWallet.restoreWalletFromKeys(
             path: path,
             password: password,
             viewKey: viewKeyController.text,
@@ -58,7 +58,7 @@ class _RestoreFromKeysViewState extends State<RestoreFromKeysView> {
           break;
 
         case "wownero":
-          wallet = WowneroWallet.restoreWalletFromKeys(
+          wallet = await WowneroWallet.restoreWalletFromKeys(
             path: path,
             password: password,
             viewKey: viewKeyController.text,

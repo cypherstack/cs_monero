@@ -109,7 +109,7 @@ class _OpenWalletDialogState extends State<OpenWalletDialog> {
     switch (type) {
       case "monero":
         daemonAddress = "monero.stackwallet.com:18081";
-        wallet = MoneroWallet.loadWallet(
+        wallet = await MoneroWallet.loadWallet(
           path: path,
           password: pw,
         );
@@ -117,7 +117,7 @@ class _OpenWalletDialogState extends State<OpenWalletDialog> {
 
       case "wownero":
         daemonAddress = "wownero.stackwallet.com:34568";
-        wallet = WowneroWallet.loadWallet(
+        wallet = await WowneroWallet.loadWallet(
           path: path,
           password: pw,
         );
