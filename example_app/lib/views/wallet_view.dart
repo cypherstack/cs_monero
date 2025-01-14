@@ -36,7 +36,7 @@ class _WalletViewState extends State<WalletView> {
   Future<void> update() async {
     isViewOnly = widget.wallet.isViewOnly();
     connected = await widget.wallet.isConnectedToDaemon();
-    txCount = (await widget.wallet.getTxs(refresh: true)).length;
+    txCount = (await widget.wallet.getAllTxids(refresh: true)).length;
     outputCount =
         (await widget.wallet.getOutputs(includeSpent: true, refresh: true))
             .length;
