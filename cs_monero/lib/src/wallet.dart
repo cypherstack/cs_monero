@@ -357,8 +357,16 @@ abstract class Wallet {
   /// Returns a transaction given it's [txid]/hash
   Future<Transaction> getTx(String txid, {bool refresh = false});
 
-  /// Returns all wallet transactions
-  Future<List<Transaction>> getTxs({bool refresh = false});
+  /// Returns transactions matching the given set of txids
+  Future<List<Transaction>> getTxs({
+    required Set<String> txids,
+    bool refresh = false,
+  });
+
+  Future<List<Transaction>> getAllTxs({bool refresh = false});
+
+  /// Returns all wallet transaction ids
+  Future<List<String>> getAllTxids({bool refresh = false});
 
   // List<Transfer> getTransfers({int? accountIdx, int? subaddressIdx});
 

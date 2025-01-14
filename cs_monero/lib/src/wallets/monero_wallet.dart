@@ -881,7 +881,27 @@ class MoneroWallet extends Wallet {
   }
 
   @override
-  Future<List<Transaction>> getTxs({bool refresh = false}) async {
+  Future<List<Transaction>> getTxs({
+    required Set<String> txids,
+    bool refresh = false,
+  }) async {
+    if (txids.isEmpty) {
+      return [];
+    }
+
+    if (refresh) {
+      await refreshTransactions();
+    }
+
+    final List<Transaction> result = [];
+    for (final txid in txids) {
+      result.add(await getTx(txid, refresh: false));
+    }
+    return result;
+  }
+
+  @override
+  Future<List<Transaction>> getAllTxs({bool refresh = false}) async {
     if (refresh) {
       await refreshTransactions();
     }
@@ -891,6 +911,25 @@ class MoneroWallet extends Wallet {
     return List.generate(
       size,
       (index) => _transactionFrom(
+        xmr_ffi.getTransactionInfoPointer(
+          _transactionHistoryPointer!,
+          index: index,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Future<List<String>> getAllTxids({bool refresh = false}) async {
+    if (refresh) {
+      await refreshTransactions();
+    }
+
+    final size = transactionCount();
+
+    return List.generate(
+      size,
+      (index) => xmr_ffi.getTransactionInfoHash(
         xmr_ffi.getTransactionInfoPointer(
           _transactionHistoryPointer!,
           index: index,
