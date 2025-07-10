@@ -1,7 +1,8 @@
 name: cs_monero_workspace
+publish_to: "none"
 
 environment:
-  sdk: ^3.5.3
+  sdk: ">=3.5.3 <4.0.0"
 
 dev_dependencies:
   melos: ^6.2.0

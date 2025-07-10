@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math';
 
 import '../create_framework.dart';
+import '../create_ios_xcframework.dart';
 import '../env.dart';
 import '../util.dart';
 
@@ -89,6 +90,35 @@ void main(List<String> args) async {
       break;
 
     case "ios":
+      final dir = Directory(
+        "$builtOutputsDirPath"
+        "${Platform.pathSeparator}Frameworks",
+      )..createSync(
+          recursive: true,
+        );
+
+      final xmrDylib = "$envMoneroCDir"
+          "${Platform.pathSeparator}release"
+          "${Platform.pathSeparator}monero"
+          "${Platform.pathSeparator}aarch64-apple-ios_libwallet2_api_c.dylib";
+      final wowDylib = "$envMoneroCDir"
+          "${Platform.pathSeparator}release"
+          "${Platform.pathSeparator}wownero"
+          "${Platform.pathSeparator}aarch64-apple-ios_libwallet2_api_c.dylib";
+
+      await createIosFramework(
+        frameworkName: "MoneroWallet",
+        pathToDylib: xmrDylib,
+        targetDirFrameworks: dir.path,
+      );
+      await createIosFramework(
+        frameworkName: "WowneroWallet",
+        pathToDylib: wowDylib,
+        targetDirFrameworks: dir.path,
+      );
+
+      break;
+
     case "macos":
       final dir = Directory(
         "$builtOutputsDirPath"
@@ -97,27 +127,14 @@ void main(List<String> args) async {
           recursive: true,
         );
 
-      final String xmrDylib;
-      final String wowDylib;
-      if (platform == "ios") {
-        xmrDylib = "$envMoneroCDir"
-            "${Platform.pathSeparator}release"
-            "${Platform.pathSeparator}monero"
-            "${Platform.pathSeparator}host-apple-ios_libwallet2_api_c.dylib";
-        wowDylib = "$envMoneroCDir"
-            "${Platform.pathSeparator}release"
-            "${Platform.pathSeparator}wownero"
-            "${Platform.pathSeparator}host-apple-ios_libwallet2_api_c.dylib";
-      } else {
-        xmrDylib = "$envMoneroCDir"
-            "${Platform.pathSeparator}release"
-            "${Platform.pathSeparator}monero"
-            "${Platform.pathSeparator}host-apple-darwin_libwallet2_api_c.dylib";
-        wowDylib = "$envMoneroCDir"
-            "${Platform.pathSeparator}release"
-            "${Platform.pathSeparator}wownero"
-            "${Platform.pathSeparator}host-apple-darwin_libwallet2_api_c.dylib";
-      }
+      final xmrDylib = "$envMoneroCDir"
+          "${Platform.pathSeparator}release"
+          "${Platform.pathSeparator}monero"
+          "${Platform.pathSeparator}host-apple-darwin_libwallet2_api_c.dylib";
+      final wowDylib = "$envMoneroCDir"
+          "${Platform.pathSeparator}release"
+          "${Platform.pathSeparator}wownero"
+          "${Platform.pathSeparator}host-apple-darwin_libwallet2_api_c.dylib";
 
       await createFramework(
         frameworkName: "MoneroWallet",
@@ -259,7 +276,7 @@ List<String> _getTriples(String platform) {
       ];
 
     case "ios":
-      return ["host-apple-ios"];
+      return ["aarch64-apple-ios"];
 
     case "macos":
       return ["host-apple-darwin"];

@@ -23,9 +23,11 @@ String get _libName {
 
 FfiMoneroC? _cachedBindings;
 FfiMoneroC get bindings => _cachedBindings ??= FfiMoneroC(
-      DynamicLibrary.open(
-        _libName,
-      ),
+      Platform.isIOS
+          ? DynamicLibrary.process()
+          : DynamicLibrary.open(
+              _libName,
+            ),
     );
 
 final defaultSeparatorStr = ";";
