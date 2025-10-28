@@ -1,3 +1,7 @@
+## 2.0.0
+
+ - **FEAT**(pure monero): No more sharing wownero. ([2a20a26d](https://github.com/cypherstack/cs_monero/commit/2a20a26d3f5c5205282c06a44d65456c14eb442b))
+
 ## 1.2.0
 
  - **FIX**: revert async. ([5e905925](https://github.com/cypherstack/cs_monero/commit/5e905925d799932e3097fc766b996455c5497908))

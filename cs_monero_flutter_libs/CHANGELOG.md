@@ -1,3 +1,7 @@
+## 2.0.0
+
+ - "Stripped wownero binaries"
+
 ## 1.1.2
 
  - Update a dependency to the latest release.

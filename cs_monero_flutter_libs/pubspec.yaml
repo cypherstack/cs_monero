@@ -1,6 +1,6 @@
 name: cs_monero_flutter_libs
 description: "Binaries required to use cs_monero in a Flutter project"
-version: 1.1.2
+version: 2.0.0
 repository: https://github.com/cypherstack/cs_monero
 homepage: https://github.com/cypherstack/cs_monero
 issue_tracker: https://github.com/cypherstack/cs_monero/issues
@@ -13,11 +13,11 @@ dependencies:
   flutter:
     sdk: flutter
   cs_monero_flutter_libs_platform_interface: 1.0.0
-  cs_monero_flutter_libs_android: 1.1.0
-  cs_monero_flutter_libs_ios: 1.1.2
-  cs_monero_flutter_libs_linux: 1.1.0
-  cs_monero_flutter_libs_macos: 1.1.1
-  cs_monero_flutter_libs_windows: 1.1.0
+  cs_monero_flutter_libs_android: 1.1.1
+  cs_monero_flutter_libs_ios: 1.2.0
+  cs_monero_flutter_libs_linux: 1.2.0
+  cs_monero_flutter_libs_macos: 1.2.0
+  cs_monero_flutter_libs_windows: 1.2.0
 
 dev_dependencies:
   flutter_test:

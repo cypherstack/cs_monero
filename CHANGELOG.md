@@ -15,6 +15,74 @@ Packages with breaking changes:
 
 Packages with other changes:
 
+ - [`cs_monero` - `v2.0.0`](#cs_monero---v200)
+ - [`cs_monero_flutter_libs` - `v2.0.0`](#cs_monero_flutter_libs---v200)
+ - [`cs_monero_flutter_libs_android_arm64_v8a` - `v1.2.0`](#cs_monero_flutter_libs_android_arm64_v8a---v120)
+ - [`cs_monero_flutter_libs_android_armeabi_v7a` - `v1.2.0`](#cs_monero_flutter_libs_android_armeabi_v7a---v120)
+ - [`cs_monero_flutter_libs_android_x86_64` - `v1.2.0`](#cs_monero_flutter_libs_android_x86_64---v120)
+ - [`cs_monero_flutter_libs_ios` - `v1.2.0`](#cs_monero_flutter_libs_ios---v120)
+ - [`cs_monero_flutter_libs_linux` - `v1.2.0`](#cs_monero_flutter_libs_linux---v120)
+ - [`cs_monero_flutter_libs_macos` - `v1.2.0`](#cs_monero_flutter_libs_macos---v120)
+ - [`cs_monero_flutter_libs_windows` - `v1.2.0`](#cs_monero_flutter_libs_windows---v120)
+ - [`cs_monero_flutter_libs_android` - `v1.1.1`](#cs_monero_flutter_libs_android---v111)
+
+Packages with dependency updates only:
+
+> Packages listed below depend on other packages in this workspace that have had changes. Their versions have been incremented to bump the minimum dependency versions of the packages they depend upon in this project.
+
+ - `cs_monero_flutter_libs_android` - `v1.1.1`
+
+---
+
+#### `cs_monero` - `v2.0.0`
+
+ - **FEAT**(pure monero): No more sharing wownero. ([2a20a26d](https://github.com/cypherstack/cs_monero/commit/2a20a26d3f5c5205282c06a44d65456c14eb442b))
+
+#### `cs_monero_flutter_libs` - `v2.0.0`
+
+ - "Stripped wownero binaries"
+
+#### `cs_monero_flutter_libs_android_arm64_v8a` - `v1.2.0`
+
+ - **FEAT**(pure monero): No more sharing wownero. ([2a20a26d](https://github.com/cypherstack/cs_monero/commit/2a20a26d3f5c5205282c06a44d65456c14eb442b))
+
+#### `cs_monero_flutter_libs_android_armeabi_v7a` - `v1.2.0`
+
+ - **FEAT**(pure monero): No more sharing wownero. ([2a20a26d](https://github.com/cypherstack/cs_monero/commit/2a20a26d3f5c5205282c06a44d65456c14eb442b))
+
+#### `cs_monero_flutter_libs_android_x86_64` - `v1.2.0`
+
+ - **FEAT**(pure monero): No more sharing wownero. ([2a20a26d](https://github.com/cypherstack/cs_monero/commit/2a20a26d3f5c5205282c06a44d65456c14eb442b))
+
+#### `cs_monero_flutter_libs_ios` - `v1.2.0`
+
+ - **FEAT**(pure monero): No more sharing wownero. ([2a20a26d](https://github.com/cypherstack/cs_monero/commit/2a20a26d3f5c5205282c06a44d65456c14eb442b))
+
+#### `cs_monero_flutter_libs_linux` - `v1.2.0`
+
+ - **FEAT**(pure monero): No more sharing wownero. ([2a20a26d](https://github.com/cypherstack/cs_monero/commit/2a20a26d3f5c5205282c06a44d65456c14eb442b))
+
+#### `cs_monero_flutter_libs_macos` - `v1.2.0`
+
+ - **FEAT**(pure monero): No more sharing wownero. ([2a20a26d](https://github.com/cypherstack/cs_monero/commit/2a20a26d3f5c5205282c06a44d65456c14eb442b))
+
+#### `cs_monero_flutter_libs_windows` - `v1.2.0`
+
+ - **FEAT**(pure monero): No more sharing wownero. ([2a20a26d](https://github.com/cypherstack/cs_monero/commit/2a20a26d3f5c5205282c06a44d65456c14eb442b))
+
+
+## 2025-10-28
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
  - [`cs_monero` - `v1.2.0`](#cs_monero---v120)
  - [`cs_monero_flutter_libs_ios` - `v1.1.2`](#cs_monero_flutter_libs_ios---v112)
  - [`cs_monero_flutter_libs_macos` - `v1.1.1`](#cs_monero_flutter_libs_macos---v111)
