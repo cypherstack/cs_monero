@@ -51,15 +51,6 @@ class _RestoreFromSeedViewState extends State<RestoreFromSeedView> {
           );
           break;
 
-        case "wownero":
-          wallet = await WowneroWallet.restoreWalletFromSeed(
-            path: path,
-            password: password,
-            seed: seedController.text,
-            restoreHeight: int.tryParse(heightController.text) ?? 0,
-          );
-          break;
-
         default:
           throw Exception("Unknown wallet type: $type");
       }

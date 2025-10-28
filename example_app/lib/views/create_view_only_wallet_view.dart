@@ -54,16 +54,6 @@ class _CreateViewOnlyWalletViewState extends State<CreateViewOnlyWalletView> {
           );
           break;
 
-        case "wownero":
-          wallet = await WowneroWallet.createViewOnlyWallet(
-            path: path,
-            password: password,
-            viewKey: viewKeyController.text,
-            restoreHeight: int.tryParse(heightController.text) ?? 0,
-            address: addressController.text,
-          );
-          break;
-
         default:
           throw Exception("Unknown wallet type: $type");
       }

@@ -36,7 +36,6 @@ void main() async {
 
     // Apply patches
     await runAsync('./apply_patches.sh', ['monero']);
-    await runAsync('./apply_patches.sh', ['wownero']);
 
     // Apply AV patches to monero_c.
     final moneroAVPatchPath = '$envProjectDir/patches/fix-monero-av.patch';
@@ -45,26 +44,6 @@ void main() async {
       'apply',
       '--whitespace=nowarn',
       moneroAVPatchPath,
-    ]);
-
-    final wowneroAVPatchPath = '$envProjectDir/patches/fix-wownero-av.patch';
-    l('Applying fix-wownero-av.patch to monero_c...');
-    await runAsync('git', [
-      'apply',
-      '--whitespace=nowarn',
-      wowneroAVPatchPath,
-    ]);
-
-    // Apply patch to fix wownero build.
-    final wowneroDir = Directory('$envMoneroCDir/wownero');
-    Directory.current = wowneroDir;
-    final wowPatchPath = '$envProjectDir/patches/device_io_dummy-condition-variables.patch';
-
-    l('Applying device_io_dummy-condition-variables.patch to wownero...');
-    await runAsync('git', [
-      'apply',
-      '--whitespace=nowarn',
-      wowPatchPath,
     ]);
   }
 }

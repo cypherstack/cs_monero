@@ -6,7 +6,7 @@ class CoinSelectorWidget extends StatefulWidget {
     this.onChanged,
     this.initialValue = "monero",
     this.child,
-  }) : assert(initialValue == "monero" || initialValue == "wownero");
+  }) : assert(initialValue == "monero");
 
   final void Function(String)? onChanged;
   final String initialValue;
@@ -35,10 +35,6 @@ class _CoinSelectorWidgetState extends State<CoinSelectorWidget> {
             ButtonSegment<String>(
               value: "monero",
               label: Text("Monero"),
-            ),
-            ButtonSegment<String>(
-              value: "wownero",
-              label: Text("Wownero"),
             ),
           ],
           selected: {_type},

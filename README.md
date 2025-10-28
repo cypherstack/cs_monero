@@ -6,7 +6,7 @@ A [Melos](https://github.com/invertase/melos) monorepo for the
 the [`cs_monero_flutter_libs` package](https://pub.dev/packages/cs_monero), and their dependencies.
 
 # About
-- A simplified Flutter/Dart Monero (and Wownero) wallet library.
+- A simplified Flutter/Dart Monero wallet library.
 - Depends on https://github.com/MrCyjaneK/monero_c/
 - Abstracts the wallet2 spaghetti.
 - Refactored and organized version of flutter_libmonero based on

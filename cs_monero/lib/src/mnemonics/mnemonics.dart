@@ -8,8 +8,6 @@ import 'monero/japanese.dart';
 import 'monero/portuguese.dart';
 import 'monero/russian.dart';
 import 'monero/spanish.dart';
-import 'wownero/english14.dart';
-import 'wownero/english25.dart';
 
 List<String> getMoneroWordList(String language) {
   switch (language.toLowerCase()) {
@@ -35,24 +33,5 @@ List<String> getMoneroWordList(String language) {
       return ItalianMnemonics.words;
     default:
       return monero.EnglishMnemonics.words;
-  }
-}
-
-List<String> getWowneroWordList(String language, {int seedWordsLength = 14}) {
-  switch (language.toLowerCase()) {
-    case 'english':
-      switch (seedWordsLength) {
-        case 25:
-          return EnglishMnemonics25.words;
-        default:
-          return EnglishMnemonics14.words;
-      }
-    default:
-      switch (seedWordsLength) {
-        case 25:
-          return EnglishMnemonics25.words;
-        default:
-          return EnglishMnemonics14.words;
-      }
   }
 }

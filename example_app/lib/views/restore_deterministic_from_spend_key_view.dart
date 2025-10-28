@@ -55,16 +55,6 @@ class _RestoreDeterministicFromSpendKeyViewState
           );
           break;
 
-        case "wownero":
-          wallet = await WowneroWallet.restoreDeterministicWalletFromSpendKey(
-            path: path,
-            password: password,
-            spendKey: spendKeyController.text,
-            restoreHeight: int.tryParse(heightController.text) ?? 0,
-            language: languageController.text,
-          );
-          break;
-
         default:
           throw Exception("Unknown wallet type: $type");
       }

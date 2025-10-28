@@ -29,7 +29,7 @@ void main() async {
       );
     }
 
-    for (final coin in ["monero", "wownero"]) {
+    for (final coin in ["monero"]) {
       await runAsync(
         "dart",
         [

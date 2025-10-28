@@ -14,12 +14,8 @@ class OpenWalletView extends StatefulWidget {
 class _OpenWalletViewState extends State<OpenWalletView> {
   Future<List<String>> getAll() async {
     final monero = await loadWalletNames("monero");
-    final wownero = await loadWalletNames("wownero");
 
-    return monero.map((e) => "Monero:  $e").toList()
-      ..addAll(
-        wownero.map((e) => "Wownero: $e"),
-      );
+    return monero.map((e) => "Monero:  $e").toList();
   }
 
   @override
@@ -60,17 +56,11 @@ class _OpenWalletViewState extends State<OpenWalletView> {
                       title: Text(names![index]),
                       onTap: () {
                         final actualName = names![index].substring(9);
-                        final String type;
-                        if (names![index].startsWith("Mon")) {
-                          type = "monero";
-                        } else {
-                          type = "wownero";
-                        }
+
                         showAdaptiveDialog<void>(
                           context: context,
                           barrierDismissible: true,
                           builder: (context) => OpenWalletDialog(
-                            type: type,
                             name: actualName,
                           ),
                         );
@@ -83,9 +73,8 @@ class _OpenWalletViewState extends State<OpenWalletView> {
 }
 
 class OpenWalletDialog extends StatefulWidget {
-  const OpenWalletDialog({super.key, required this.type, required this.name});
+  const OpenWalletDialog({super.key, required this.name});
 
-  final String type;
   final String name;
 
   @override
@@ -97,36 +86,19 @@ class _OpenWalletDialogState extends State<OpenWalletDialog> {
 
   Future<Wallet> _helperFuture(
     String name,
-    String type,
     String pw,
   ) async {
     final path = await pathForWallet(
       name: name,
-      type: type,
+      type: "monero",
       createIfNotExists: false,
     );
-    final Wallet wallet;
-    final String daemonAddress;
-    switch (type) {
-      case "monero":
-        daemonAddress = "monero.stackwallet.com:18081";
-        wallet = await MoneroWallet.loadWallet(
-          path: path,
-          password: pw,
-        );
-        break;
+    final daemonAddress = "monero.stackwallet.com:18081";
+    final wallet = await MoneroWallet.loadWallet(
+      path: path,
+      password: pw,
+    );
 
-      case "wownero":
-        daemonAddress = "wownero.stackwallet.com:34568";
-        wallet = await WowneroWallet.loadWallet(
-          path: path,
-          password: pw,
-        );
-        break;
-
-      default:
-        throw Exception("Unknown wallet type: $type");
-    }
     await wallet.connect(
       daemonAddress: daemonAddress,
       trusted: true,
@@ -138,7 +110,7 @@ class _OpenWalletDialogState extends State<OpenWalletDialog> {
 
   bool _locked = false;
 
-  Future<void> _onPressed(String type, String name, String pw) async {
+  Future<void> _onPressed(String name, String pw) async {
     if (_locked) return;
     setState(() {
       _locked = true;
@@ -147,7 +119,7 @@ class _OpenWalletDialogState extends State<OpenWalletDialog> {
     try {
       bool didError = false;
       final wallet = await showLoading(
-        whileFuture: _helperFuture(name, type, pw),
+        whileFuture: _helperFuture(name, pw),
         context: context,
         onError: (e, s) async {
           didError = true;
@@ -232,7 +204,7 @@ class _OpenWalletDialogState extends State<OpenWalletDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text("Open \"${widget.name}\" (${widget.type}) wallet"),
+                Text("Open \"${widget.name}\" (monero) wallet"),
                 const SizedBox(height: 16),
                 SizedBox(
                   width: MediaQuery.of(context).size.width - 32,
@@ -248,7 +220,6 @@ class _OpenWalletDialogState extends State<OpenWalletDialog> {
                 TextButton(
                   onPressed: () {
                     _onPressed(
-                      widget.type,
                       widget.name,
                       controller.text,
                     );

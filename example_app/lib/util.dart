@@ -72,9 +72,6 @@ String formattedAmount(BigInt value, Type walletType) {
     case const (MoneroWallet):
       decimalPlaces = 12;
       break;
-    case const (WowneroWallet):
-      decimalPlaces = 11;
-      break;
 
     default:
       return "error";

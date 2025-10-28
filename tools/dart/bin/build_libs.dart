@@ -7,7 +7,7 @@ import '../util.dart';
 
 void main(List<String> args) async {
   const platforms = ["android", "ios", "macos", "linux", "windows"];
-  const coins = ["monero", "wownero"];
+  const coins = ["monero"];
 
   if (args.length != 1) {
     throw ArgumentError(
@@ -107,29 +107,16 @@ void main(List<String> args) async {
             "${Platform.pathSeparator}release"
             "${Platform.pathSeparator}monero"
             "${Platform.pathSeparator}${triple}_libwallet2_api_c.dylib";
-        wowDylib = "$envMoneroCDir"
-            "${Platform.pathSeparator}release"
-            "${Platform.pathSeparator}wownero"
-            "${Platform.pathSeparator}${triple}_libwallet2_api_c.dylib";
       } else {
         xmrDylib = "$envMoneroCDir"
             "${Platform.pathSeparator}release"
             "${Platform.pathSeparator}monero"
-            "${Platform.pathSeparator}${triple}_libwallet2_api_c.dylib";
-        wowDylib = "$envMoneroCDir"
-            "${Platform.pathSeparator}release"
-            "${Platform.pathSeparator}wownero"
             "${Platform.pathSeparator}${triple}_libwallet2_api_c.dylib";
       }
 
       await createFramework(
         frameworkName: "MoneroWallet",
         pathToDylib: xmrDylib,
-        targetDirFrameworks: dir.path,
-      );
-      await createFramework(
-        frameworkName: "WowneroWallet",
-        pathToDylib: wowDylib,
         targetDirFrameworks: dir.path,
       );
 
@@ -171,21 +158,10 @@ void main(List<String> args) async {
               "${Platform.pathSeparator}monero_libwallet2_api_c.dll",
         ],
       );
-      await runAsync(
-        "cp",
-        [
-          "$envMoneroCDir"
-              "${Platform.pathSeparator}release"
-              "${Platform.pathSeparator}wownero"
-              "${Platform.pathSeparator}x86_64-w64-mingw32_libwallet2_api_c.dll",
-          "${dir.path}"
-              "${Platform.pathSeparator}wownero_libwallet2_api_c.dll",
-        ],
-      );
 
       final sspPath = "$envMoneroCDir"
           "${Platform.pathSeparator}release"
-          "${Platform.pathSeparator}wownero"
+          "${Platform.pathSeparator}monero"
           "${Platform.pathSeparator}x86_64-w64-mingw32_libssp-0.dll";
 
       if (File("$sspPath.xz").existsSync()) {
@@ -202,7 +178,7 @@ void main(List<String> args) async {
 
       final pThreadPath = "$envMoneroCDir"
           "${Platform.pathSeparator}release"
-          "${Platform.pathSeparator}wownero"
+          "${Platform.pathSeparator}monero"
           "${Platform.pathSeparator}x86_64-w64-mingw32_libwinpthread-1.dll";
 
       if (File("$pThreadPath.xz").existsSync()) {

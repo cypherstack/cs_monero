@@ -57,18 +57,6 @@ class _RestoreFromKeysViewState extends State<RestoreFromKeysView> {
           );
           break;
 
-        case "wownero":
-          wallet = await WowneroWallet.restoreWalletFromKeys(
-            path: path,
-            password: password,
-            viewKey: viewKeyController.text,
-            spendKey: spendKeyController.text,
-            restoreHeight: int.tryParse(heightController.text) ?? 0,
-            address: addressController.text,
-            language: languageController.text,
-          );
-          break;
-
         default:
           throw Exception("Unknown wallet type: $type");
       }
