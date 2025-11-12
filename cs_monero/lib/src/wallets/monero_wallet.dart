@@ -44,7 +44,7 @@ class MoneroWallet extends Wallet {
       ),
     );
 
-    _worker.eventStream.listen((data) {
+    _subscription = _worker.eventStream.listen((data) {
       Logging.log?.t("Polling event: $data");
 
       if (data is Map) {
@@ -90,6 +90,7 @@ class MoneroWallet extends Wallet {
   @override
   Future<void> stopListeners() async {
     await _subscription?.cancel();
+    _subscription = null;
     await _worker.runTask<bool>(
       Task(
         func: FuncName.stopPolling,
