@@ -39,13 +39,14 @@ abstract class Logging {
   static set useLogger(bool useLogger) {
     if (useLogger) {
       log = Logger(
-        printer: PrefixPrinter(
+        printer: CSPrefixPrinter(
           PrettyPrinter(
             printEmojis: false, // Disable emoji symbols in log output
             methodCount: 0, // Disable method trace
             excludeBox: {
               Level.info: true, // Info level logs will not use boxed format
               Level.debug: true, // Debug level logs will not use boxed format
+              Level.trace: true, // Debug level logs will not use boxed format
             },
           ),
         ),
@@ -54,5 +55,47 @@ abstract class Logging {
       log = null; // Disables logging by setting log to null
     }
     _useLogger = useLogger;
+  }
+}
+
+class CSPrefixPrinter extends LogPrinter {
+  final LogPrinter _realPrinter;
+  late Map<Level, String> _prefixMap;
+
+  static const _masterPrefix = "CS_MONERO";
+
+  CSPrefixPrinter(
+    this._realPrinter, {
+    String? debug,
+    String? trace,
+    String? fatal,
+    String? info,
+    String? warning,
+    String? error,
+  }) {
+    _prefixMap = {
+      Level.debug: debug ?? 'DEBUG',
+      Level.trace: trace ?? 'TRACE',
+      Level.fatal: fatal ?? 'FATAL',
+      Level.info: info ?? 'INFO',
+      Level.warning: warning ?? 'WARNING',
+      Level.error: error ?? 'ERROR',
+    };
+
+    final len = _longestPrefixLength();
+    _prefixMap.forEach((k, v) => _prefixMap[k] = '${v.padLeft(len)} ');
+  }
+
+  @override
+  List<String> log(LogEvent event) {
+    final realLogs = _realPrinter.log(event);
+    return realLogs
+        .map((s) => '$_masterPrefix ${_prefixMap[event.level]}$s')
+        .toList();
+  }
+
+  int _longestPrefixLength() {
+    compare(String a, String b) => a.length > b.length ? a : b;
+    return _prefixMap.values.reduce(compare).length;
   }
 }
