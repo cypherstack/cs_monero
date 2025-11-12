@@ -5,6 +5,7 @@ library;
 
 export 'src/enums/min_confirms.dart';
 export 'src/enums/monero_seed_type.dart';
+export 'src/enums/network.dart';
 export 'src/enums/transaction_priority.dart';
 export 'src/logging.dart';
 export 'src/mnemonics/mnemonics.dart';

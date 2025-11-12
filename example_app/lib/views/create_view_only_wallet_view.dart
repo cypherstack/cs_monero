@@ -51,6 +51,7 @@ class _CreateViewOnlyWalletViewState extends State<CreateViewOnlyWalletView> {
             viewKey: viewKeyController.text,
             restoreHeight: int.tryParse(heightController.text) ?? 0,
             address: addressController.text,
+            networkType: Network.mainnet,
           );
           break;
 

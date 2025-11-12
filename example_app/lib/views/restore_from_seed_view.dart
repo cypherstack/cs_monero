@@ -48,6 +48,7 @@ class _RestoreFromSeedViewState extends State<RestoreFromSeedView> {
             password: password,
             seed: seedController.text,
             restoreHeight: int.tryParse(heightController.text) ?? 0,
+            networkType: Network.mainnet,
           );
           break;
 

@@ -48,7 +48,7 @@ class _CreateTransactionViewState extends State<CreateTransactionView> {
             ? widget.wallet.createTx(
                 output: Recipient(
                   address: recipients.first.$2.text,
-                  amount: (widget.wallet
+                  amount: (await widget.wallet
                       .amountFromString(recipients.first.$3.text))!,
                 ),
                 priority: TransactionPriority.normal,
@@ -59,7 +59,8 @@ class _CreateTransactionViewState extends State<CreateTransactionView> {
                   recipients.map(
                     (r) async => Recipient(
                       address: r.$2.text,
-                      amount: (widget.wallet.amountFromString(r.$3.text))!,
+                      amount:
+                          (await widget.wallet.amountFromString(r.$3.text))!,
                     ),
                   ),
                 ))

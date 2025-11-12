@@ -34,25 +34,25 @@ class _WalletViewState extends State<WalletView> {
   String privateSpendKey = "";
 
   Future<void> update() async {
-    isViewOnly = widget.wallet.isViewOnly();
+    isViewOnly = await widget.wallet.isViewOnly();
     connected = await widget.wallet.isConnectedToDaemon();
     txCount = (await widget.wallet.getAllTxids(refresh: true)).length;
     outputCount =
         (await widget.wallet.getOutputs(includeSpent: true, refresh: true))
             .length;
-    path = widget.wallet.getPath();
-    password = widget.wallet.getPassword();
-    daemonHeight = widget.wallet.getDaemonHeight();
-    syncHeight = widget.wallet.getCurrentWalletSyncingHeight();
-    syncFromHeight = widget.wallet.getRefreshFromBlockHeight();
-    address = widget.wallet.getAddress();
-    mnemonic = widget.wallet.getSeed();
-    balance = widget.wallet.getBalance();
-    unlocked = widget.wallet.getUnlockedBalance();
-    publicViewKey = widget.wallet.getPublicViewKey();
-    privateViewKey = widget.wallet.getPrivateViewKey();
-    publicSpendKey = widget.wallet.getPublicSpendKey();
-    privateSpendKey = widget.wallet.getPrivateSpendKey();
+    path = await widget.wallet.getPath();
+    password = await widget.wallet.getPassword();
+    daemonHeight = await widget.wallet.getDaemonHeight();
+    syncHeight = await widget.wallet.getCurrentWalletSyncingHeight();
+    syncFromHeight = await widget.wallet.getRefreshFromBlockHeight();
+    address = await widget.wallet.getAddress();
+    mnemonic = await widget.wallet.getSeed();
+    balance = await widget.wallet.getBalance();
+    unlocked = await widget.wallet.getUnlockedBalance();
+    publicViewKey = await widget.wallet.getPublicViewKey();
+    privateViewKey = await widget.wallet.getPrivateViewKey();
+    publicSpendKey = await widget.wallet.getPublicSpendKey();
+    privateSpendKey = await widget.wallet.getPrivateSpendKey();
 
     if (mounted) {
       setState(() {});

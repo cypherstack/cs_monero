@@ -154,8 +154,8 @@ void stopWallet(Pointer<Void> walletPointer) {
   bindings.MONERO_Wallet_stop(walletPointer);
 }
 
-bool rescanWalletBlockchain(Pointer<Void> walletPointer) {
-  return bindings.MONERO_Wallet_rescanBlockchain(walletPointer);
+void rescanWalletBlockchainAsync(Pointer<Void> walletPointer) {
+  bindings.MONERO_Wallet_rescanBlockchainAsync(walletPointer);
 }
 
 // =============================================================================
