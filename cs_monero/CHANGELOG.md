@@ -1,3 +1,13 @@
+## 3.0.0
+
+> Note: This release has breaking changes.
+
+ - **FIX**: revert async. ([5e905925](https://github.com/cypherstack/cs_monero/commit/5e905925d799932e3097fc766b996455c5497908))
+ - **FEAT**(pure monero): No more sharing wownero. ([2a20a26d](https://github.com/cypherstack/cs_monero/commit/2a20a26d3f5c5205282c06a44d65456c14eb442b))
+ - **FEAT**: more async. ([74e76a8f](https://github.com/cypherstack/cs_monero/commit/74e76a8f6fc9dd7b97712c086aab031c527c8625))
+ - **FEAT**: convert API to async. ([6a710762](https://github.com/cypherstack/cs_monero/commit/6a710762a6d2b5e7c72297a59b21a4cc20e48bbf))
+ - **BREAKING** **FEAT**: run wallet in its own isolate. ([3df27ebb](https://github.com/cypherstack/cs_monero/commit/3df27ebb6dbd771c1ad904d9556f064e973cc43b))
+
 ## 2.0.0
 
  - **FEAT**(pure monero): No more sharing wownero. ([2a20a26d](https://github.com/cypherstack/cs_monero/commit/2a20a26d3f5c5205282c06a44d65456c14eb442b))
