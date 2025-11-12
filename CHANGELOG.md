@@ -11,6 +11,28 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 Packages with breaking changes:
 
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`cs_monero` - `v3.1.0`](#cs_monero---v310)
+
+---
+
+#### `cs_monero` - `v3.1.0`
+
+ - **FIX**: cancel listeners. ([fd79ca5a](https://github.com/cypherstack/cs_monero/commit/fd79ca5a7f08ef4bbbb6bf786058cb0007b19b5b))
+ - **FEAT**: clearer logging. ([4dbf2c8b](https://github.com/cypherstack/cs_monero/commit/4dbf2c8b5e909a97add8edaf1e89d9de3f907daf))
+
+
+## 2025-11-12
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
  - [`cs_monero` - `v3.0.0`](#cs_monero---v300)
 
 Packages with other changes:
