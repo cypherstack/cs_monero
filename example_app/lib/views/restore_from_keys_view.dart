@@ -54,6 +54,7 @@ class _RestoreFromKeysViewState extends State<RestoreFromKeysView> {
             restoreHeight: int.tryParse(heightController.text) ?? 0,
             address: addressController.text,
             language: languageController.text,
+            networkType: Network.mainnet,
           );
           break;
 

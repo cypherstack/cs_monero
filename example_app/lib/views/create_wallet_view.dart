@@ -45,6 +45,7 @@ class _CreateWalletViewState extends State<CreateWalletView> {
             path: path,
             password: password,
             seedType: _selectedXmrType!,
+            networkType: Network.mainnet,
           );
           break;
 

@@ -97,6 +97,7 @@ class _OpenWalletDialogState extends State<OpenWalletDialog> {
     final wallet = await MoneroWallet.loadWallet(
       path: path,
       password: pw,
+      networkType: Network.mainnet,
     );
 
     await wallet.connect(

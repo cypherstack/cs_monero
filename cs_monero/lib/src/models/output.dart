@@ -84,4 +84,20 @@ class Output {
         spent: spent,
         coinbase: coinbase,
       );
+
+  static Output fromRawMap(Map<String, dynamic> map) {
+    return Output(
+      address: map["address"] as String,
+      hash: map["hash"] as String,
+      keyImage: map["keyImage"] as String,
+      value: BigInt.from(map["value"] as int),
+      isFrozen: map["isFrozen"] as bool,
+      isUnlocked: map["isUnlocked"] as bool,
+      height: map["height"] as int,
+      spentHeight: map["spentHeight"] as int?,
+      vout: map["vout"] as int,
+      spent: map["spent"] as bool,
+      coinbase: map["coinbase"] as bool,
+    );
+  }
 }

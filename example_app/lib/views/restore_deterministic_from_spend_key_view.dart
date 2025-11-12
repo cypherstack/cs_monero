@@ -52,6 +52,7 @@ class _RestoreDeterministicFromSpendKeyViewState
             spendKey: spendKeyController.text,
             restoreHeight: int.tryParse(heightController.text) ?? 0,
             language: languageController.text,
+            networkType: Network.mainnet,
           );
           break;
 

@@ -110,4 +110,25 @@ class Transaction {
           .firstWhere((e) => e.value == map['minConfirms'] as int),
     );
   }
+
+  static Transaction fromRawMap(Map<String, dynamic> map) {
+    return Transaction(
+      displayLabel: map['displayLabel'] as String,
+      description: map['description'] as String,
+      fee: BigInt.parse(map['fee'] as String),
+      confirmations: map['confirmations'] as int,
+      blockHeight: map['blockHeight'] as int,
+      accountIndex: map['accountIndex'] as int,
+      addressIndexes: Set<int>.from(map['addressIndexes'] as List),
+      paymentId: map['paymentId'] as String,
+      amount: BigInt.parse(map['amount'] as String),
+      isSpend: map['isSpend'] as bool,
+      hash: map['hash'] as String,
+      key: map['key'] as String,
+      timeStamp: DateTime.fromMillisecondsSinceEpoch(
+        (map['timeStamp'] as int) * 1000,
+      ),
+      minConfirms: MinConfirms.monero,
+    );
+  }
 }

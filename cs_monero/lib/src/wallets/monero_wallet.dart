@@ -1,37 +1,25 @@
+import 'dart:async';
 import 'dart:ffi';
-import 'dart:isolate';
 
 import 'package:meta/meta.dart';
 
 import '../../cs_monero.dart';
 import '../deprecated/get_height_by_date.dart';
-import '../ffi_bindings/monero_wallet_bindings.dart' as xmr_ffi;
 import '../ffi_bindings/monero_wallet_manager_bindings.dart' as xmr_wm_ffi;
+import '../isolated/worker.dart';
 
 class MoneroWallet extends Wallet {
   // internal constructor
-  MoneroWallet._(Pointer<Void> pointer) : _walletPointer = pointer;
+  MoneroWallet._(int pointer, this._worker) : _walletPointer = pointer;
+
+  final Worker _worker;
 
   // shared pointer
-  static Pointer<Void>? _walletManagerPointerCached;
-  static final Pointer<Void> _walletManagerPointer = Pointer.fromAddress(
-    (() {
-      try {
-        // monero.printStarts = true;
-        _walletManagerPointerCached ??= xmr_wm_ffi.getWalletManager();
-        Logging.log?.i("ptr: $_walletManagerPointerCached");
-      } catch (e, s) {
-        Logging.log?.e("Failed to initialize wm ptr", error: e, stackTrace: s);
-      }
-      return _walletManagerPointerCached!.address;
-    })(),
-  );
+  static final int _walletManagerPointerAddress =
+      xmr_wm_ffi.getWalletManager().address;
 
-  // instance pointers
-  Pointer<Void>? _coinsPointer;
-  Pointer<Void>? _transactionHistoryPointer;
-  Pointer<Void>? _walletPointer;
-  Pointer<Void> _getWalletPointer() {
+  int? _walletPointer;
+  int _getWalletPointer() {
     if (_walletPointer == null) {
       throw Exception(
         "MoneroWallet was closed!",
@@ -40,26 +28,76 @@ class MoneroWallet extends Wallet {
     return _walletPointer!;
   }
 
-  // private helpers
+  StreamSubscription<dynamic>? _subscription;
 
-  Transaction _transactionFrom(Pointer<Void> infoPointer) {
-    return Transaction(
-      displayLabel: xmr_ffi.getTransactionInfoLabel(infoPointer),
-      description: xmr_ffi.getTransactionInfoDescription(infoPointer),
-      fee: BigInt.from(xmr_ffi.getTransactionInfoFee(infoPointer)),
-      confirmations: xmr_ffi.getTransactionInfoConfirmations(infoPointer),
-      blockHeight: xmr_ffi.getTransactionInfoBlockHeight(infoPointer),
-      accountIndex: xmr_ffi.getTransactionInfoAccount(infoPointer),
-      addressIndexes: xmr_ffi.getTransactionSubaddressIndexes(infoPointer),
-      paymentId: xmr_ffi.getTransactionInfoPaymentId(infoPointer),
-      amount: BigInt.from(xmr_ffi.getTransactionInfoAmount(infoPointer)),
-      isSpend: xmr_ffi.getTransactionInfoIsSpend(infoPointer),
-      hash: xmr_ffi.getTransactionInfoHash(infoPointer),
-      key: getTxKey(xmr_ffi.getTransactionInfoHash(infoPointer)),
-      timeStamp: DateTime.fromMillisecondsSinceEpoch(
-        xmr_ffi.getTransactionInfoTimestamp(infoPointer) * 1000,
+  @override
+  Future<void> startListeners() async {
+    await stopListeners();
+
+    await _worker.runTask<bool>(
+      Task(
+        func: FuncName.startPolling,
+        args: {
+          "wallet": _getWalletPointer(),
+          "seconds": pollingInterval.inSeconds,
+        },
       ),
-      minConfirms: MinConfirms.monero,
+    );
+
+    _worker.eventStream.listen((data) {
+      Logging.log?.t("Polling event: $data");
+
+      if (data is Map) {
+        final type = data["type"] as String;
+
+        final listeners = getListeners();
+
+        switch (type) {
+          case "onBalancesChanged":
+            final full = BigInt.from(data["full"] as int);
+            final unlocked = BigInt.from(data["unlocked"] as int);
+            for (final listener in listeners) {
+              listener.onBalancesChanged
+                  ?.call(newBalance: full, newUnlockedBalance: unlocked);
+            }
+            break;
+
+          case "onNewBlock":
+            final nodeHeight = data["nodeHeight"] as int;
+            for (final listener in listeners) {
+              listener.onNewBlock?.call(nodeHeight);
+            }
+            break;
+
+          case "onSyncingUpdate":
+            final nodeHeight = data["nodeHeight"] as int;
+            final currentSyncingHeight = data["syncHeight"] as int;
+            for (final listener in listeners) {
+              listener.onSyncingUpdate?.call(
+                syncHeight: currentSyncingHeight,
+                nodeHeight: nodeHeight,
+              );
+            }
+            break;
+
+          default:
+            throw Exception("Unknown event type: $type");
+        }
+      }
+    });
+  }
+
+  @override
+  Future<void> stopListeners() async {
+    await _subscription?.cancel();
+    await _worker.runTask<bool>(
+      Task(
+        func: FuncName.stopPolling,
+        args: {
+          "wallet": _getWalletPointer(),
+          "seconds": pollingInterval.inSeconds,
+        },
+      ),
     );
   }
 
@@ -81,10 +119,7 @@ class MoneroWallet extends Wallet {
   /// - **seedType** (`MoneroSeedType`, required): Specifies the seed type for the wallet:
   ///   - `sixteen`: 16-word seed (uses polyseed).
   ///   - `twentyFive`: 25-word seed.
-  /// - **networkType** (`int`, optional): Specifies the Monero network type:
-  ///   - `0`: Mainnet (default).
-  ///   - `1`: Testnet.
-  ///   - `2`: Stagenet.
+  /// - **networkType** (`Network`, required): Specifies the Monero network type.
   ///
   /// ### Returns:
   /// A `Future` that resolves to an instance of [MoneroWallet] once the wallet
@@ -96,7 +131,7 @@ class MoneroWallet extends Wallet {
   ///   path: '/path/to/new_wallet',
   ///   password: 'secure_password',
   ///   seedType: MoneroSeedType.twentyFive,
-  ///   networkType: 0,
+  ///   networkType: Network.mainnet,
   /// );
   /// ```
   static Future<MoneroWallet> create({
@@ -104,57 +139,47 @@ class MoneroWallet extends Wallet {
     required String password,
     String language = "English",
     required MoneroSeedType seedType,
-    int networkType = 0,
+    required Network networkType,
     String seedOffset = "",
   }) async {
-    final walletManagerPointerAddress = _walletManagerPointer.address;
-    final Pointer<Void> walletPointer;
+    final worker = await Worker.spawn();
+
+    final int walletPointerAddress;
     switch (seedType) {
       case MoneroSeedType.sixteen:
-        final seed = xmr_ffi.createPolyseed(language: language);
-        walletPointer = Pointer<Void>.fromAddress(
-          await Isolate.run(
-            () => xmr_wm_ffi
-                .createWalletFromPolyseed(
-                  Pointer.fromAddress(walletManagerPointerAddress),
-                  path: path,
-                  password: password,
-                  mnemonic: seed,
-                  seedOffset: seedOffset,
-                  newWallet: true,
-                  restoreHeight: 0, // ignored by core underlying code
-                  kdfRounds: 1,
-                )
-                .address,
+        walletPointerAddress = await worker.runTask(
+          Task(
+            func: FuncName.createPolySeedWallet,
+            args: {
+              "wm": _walletManagerPointerAddress,
+              "lang": language,
+              "path": path,
+              "pw": password,
+              "offset": seedOffset,
+              "net": networkType.value,
+            },
           ),
         );
         break;
 
       case MoneroSeedType.twentyFive:
-        walletPointer = Pointer<Void>.fromAddress(
-          await Isolate.run(
-            () => xmr_wm_ffi
-                .createWallet(
-                  Pointer.fromAddress(walletManagerPointerAddress),
-                  path: path,
-                  password: password,
-                  language: language,
-                  networkType: networkType,
-                )
-                .address,
+        walletPointerAddress = await worker.runTask(
+          Task(
+            func: FuncName.createWallet,
+            args: {
+              "wm": _walletManagerPointerAddress,
+              "lang": language,
+              "path": path,
+              "pw": password,
+              "net": networkType.value,
+            },
           ),
         );
+
         break;
     }
 
-    xmr_ffi.checkWalletStatus(walletPointer);
-
-    final address = walletPointer.address;
-    await Isolate.run(() {
-      xmr_ffi.storeWallet(Pointer.fromAddress(address), path: path);
-    });
-
-    final wallet = MoneroWallet._(walletPointer);
+    final wallet = MoneroWallet._(walletPointerAddress, worker);
     return wallet;
   }
 
@@ -164,10 +189,7 @@ class MoneroWallet extends Wallet {
   /// - **path** (`String`, required): The file path where the wallet will be stored.
   /// - **password** (`String`, required): The password used to encrypt the wallet file.
   /// - **seed** (`String`, required): The mnemonic seed phrase for restoring the wallet.
-  /// - **networkType** (`int`, optional): Specifies the Monero network type to use:
-  ///   - `0`: Mainnet (default)
-  ///   - `1`: Testnet
-  ///   - `2`: Stagenet
+  /// - **networkType** (`Network`, required): Specifies the Monero network type.
   /// - **restoreHeight** (`int`, optional): The blockchain height from which to start
   ///   synchronizing the wallet. Defaults to `0`, starting from the genesis block.
   ///   NOTE: THIS IS ONLY USED BY 25 WORD SEEDS!
@@ -181,7 +203,7 @@ class MoneroWallet extends Wallet {
   ///   path: '/path/to/wallet',
   ///   password: 'secure_password',
   ///   seed: 'mnemonic seed phrase here',
-  ///   networkType: 0,
+  ///   networkType: Network.mainnet,
   ///   restoreHeight: 200000, // Start from a specific block height
   /// );
   /// ```
@@ -193,59 +215,47 @@ class MoneroWallet extends Wallet {
     required String path,
     required String password,
     required String seed,
-    int networkType = 0,
+    required Network networkType,
     int restoreHeight = 0,
     String seedOffset = "",
   }) async {
-    final walletManagerPointerAddress = _walletManagerPointer.address;
-    final Pointer<Void> walletPointer;
+    final worker = await Worker.spawn();
+    final int walletPointerAddress;
     final seedLength = seed.split(' ').length;
     if (seedLength == 25) {
-      walletPointer = Pointer<Void>.fromAddress(
-        await Isolate.run(
-          () => xmr_wm_ffi
-              .recoveryWallet(
-                Pointer.fromAddress(walletManagerPointerAddress),
-                path: path,
-                password: password,
-                mnemonic: seed,
-                restoreHeight: restoreHeight,
-                seedOffset: seedOffset,
-                networkType: networkType,
-              )
-              .address,
+      walletPointerAddress = await worker.runTask(
+        Task(
+          func: FuncName.recoverWallet,
+          args: {
+            "wm": _walletManagerPointerAddress,
+            "seed": seed,
+            "path": path,
+            "pw": password,
+            "offset": seedOffset,
+            "net": networkType.value,
+            "height": restoreHeight,
+          },
         ),
       );
     } else if (seedLength == 16) {
-      walletPointer = Pointer<Void>.fromAddress(
-        await Isolate.run(
-          () => xmr_wm_ffi
-              .createWalletFromPolyseed(
-                Pointer.fromAddress(walletManagerPointerAddress),
-                path: path,
-                password: password,
-                mnemonic: seed,
-                seedOffset: seedOffset,
-                newWallet: false,
-                restoreHeight: 0, // ignored by core underlying code
-                kdfRounds: 1,
-                networkType: networkType,
-              )
-              .address,
+      walletPointerAddress = await worker.runTask(
+        Task(
+          func: FuncName.recoverWalletFromPolyseed,
+          args: {
+            "wm": _walletManagerPointerAddress,
+            "seed": seed,
+            "path": path,
+            "pw": password,
+            "offset": seedOffset,
+            "net": networkType.value,
+          },
         ),
       );
     } else {
       throw Exception("Bad seed length: $seedLength");
     }
 
-    xmr_ffi.checkWalletStatus(walletPointer);
-
-    final address = walletPointer.address;
-    await Isolate.run(() {
-      xmr_ffi.storeWallet(Pointer.fromAddress(address), path: path);
-    });
-
-    final wallet = MoneroWallet._(walletPointer);
+    final wallet = MoneroWallet._(walletPointerAddress, worker);
     return wallet;
   }
 
@@ -262,10 +272,7 @@ class MoneroWallet extends Wallet {
   /// - **address** (`String`, required): The public address associated with the wallet.
   /// - **viewKey** (`String`, required): The private view key, granting read access
   ///   to the wallet's transaction history.
-  /// - **networkType** (`int`, optional): Specifies the Monero network type:
-  ///   - `0`: Mainnet (default)
-  ///   - `1`: Testnet
-  ///   - `2`: Stagenet
+  /// - **networkType** (`Network`, required): Specifies the Monero network type.
   /// - **restoreHeight** (`int`, optional): The blockchain height from which to start
   ///   synchronizing the wallet. Defaults to `0`, starting from the genesis block.
   ///
@@ -280,7 +287,7 @@ class MoneroWallet extends Wallet {
   ///   password: 'secure_password',
   ///   address: 'public_address_here',
   ///   viewKey: 'view_key_here',
-  ///   networkType: 0,
+  ///   networkType: Network.mainnet,
   ///   restoreHeight: 50000, // Sync from a specific block height
   /// );
   /// ```
@@ -297,10 +304,10 @@ class MoneroWallet extends Wallet {
     required String password,
     required String address,
     required String viewKey,
-    int networkType = 0,
+    required Network networkType,
     int restoreHeight = 0,
-  }) async =>
-      await restoreWalletFromKeys(
+  }) =>
+      restoreWalletFromKeys(
         path: path,
         password: password,
         language: "", // not used when the viewKey is not empty
@@ -326,10 +333,7 @@ class MoneroWallet extends Wallet {
   /// - **address** (`String`, required): The public address of the wallet to restore.
   /// - **viewKey** (`String`, required): The private view key associated with the wallet.
   /// - **spendKey** (`String`, required): The private spend key associated with the wallet.
-  /// - **networkType** (`int`, optional): Specifies the Monero network type:
-  ///   - `0`: Mainnet (default)
-  ///   - `1`: Testnet
-  ///   - `2`: Stagenet
+  /// - **networkType** (`Network`, required): Specifies the Monero network type.
   /// - **restoreHeight** (`int`, optional): The blockchain height from which to start
   ///   synchronizing the wallet. Defaults to `0`, starting from the genesis block.
   ///
@@ -345,7 +349,7 @@ class MoneroWallet extends Wallet {
   ///   address: 'public_address_here',
   ///   viewKey: 'view_key_here',
   ///   spendKey: 'spend_key_here',
-  ///   networkType: 0,
+  ///   networkType: Network.mainnet,
   ///   restoreHeight: 100000, // Start syncing from a specific block height
   /// );
   /// ```
@@ -360,31 +364,28 @@ class MoneroWallet extends Wallet {
     required String address,
     required String viewKey,
     required String spendKey,
-    int networkType = 0,
+    required Network networkType,
     int restoreHeight = 0,
   }) async {
-    final walletManagerPointerAddress = _walletManagerPointer.address;
-    final walletPointer = Pointer<Void>.fromAddress(
-      await Isolate.run(
-        () => xmr_wm_ffi
-            .createWalletFromKeys(
-              Pointer.fromAddress(walletManagerPointerAddress),
-              path: path,
-              password: password,
-              language: language,
-              addressString: address,
-              viewKeyString: viewKey,
-              spendKeyString: spendKey,
-              networkType: networkType,
-              restoreHeight: restoreHeight,
-            )
-            .address,
+    final worker = await Worker.spawn();
+    final walletPointerAddress = await worker.runTask<int>(
+      Task(
+        func: FuncName.recoverWalletFromKeys,
+        args: {
+          "wm": _walletManagerPointerAddress,
+          "path": path,
+          "pw": password,
+          "lang": language,
+          "addr": address,
+          "vk": viewKey,
+          "sp": spendKey,
+          "net": networkType.value,
+          "height": restoreHeight,
+        },
       ),
     );
 
-    xmr_ffi.checkWalletStatus(walletPointer);
-
-    final wallet = MoneroWallet._(walletPointer);
+    final wallet = MoneroWallet._(walletPointerAddress, worker);
     return wallet;
   }
 
@@ -396,10 +397,7 @@ class MoneroWallet extends Wallet {
   /// - **language** (`String`, required): The mnemonic language for any future
   ///   seed generation or wallet recovery prompts.
   /// - **spendKey** (`String`, required): The private spend key associated with the wallet.
-  /// - **networkType** (`int`, optional): Specifies the Monero network type:
-  ///   - `0`: Mainnet (default)
-  ///   - `1`: Testnet
-  ///   - `2`: Stagenet
+  /// - **networkType** (`Network`, optional): Specifies the Monero network type.
   /// - **restoreHeight** (`int`, optional): The blockchain height from which to start
   ///   synchronizing the wallet. Defaults to `0`, starting from the genesis block.
   ///
@@ -414,7 +412,7 @@ class MoneroWallet extends Wallet {
   ///   password: 'secure_password',
   ///   language: 'English',
   ///   spendKey: 'spend_key_here',
-  ///   networkType: 0,
+  ///   networkType: Network.mainnet,
   ///   restoreHeight: 100000, // Start syncing from a specific block height
   /// );
   /// ```
@@ -432,31 +430,26 @@ class MoneroWallet extends Wallet {
     required String password,
     required String language,
     required String spendKey,
-    int networkType = 0,
+    required Network networkType,
     int restoreHeight = 0,
   }) async {
-    final walletManagerPointerAddress = _walletManagerPointer.address;
-    final walletPointer = Pointer<Void>.fromAddress(
-      await Isolate.run(
-        () => xmr_wm_ffi
-            .createDeterministicWalletFromSpendKey(
-              Pointer.fromAddress(walletManagerPointerAddress),
-              path: path,
-              password: password,
-              language: language,
-              spendKeyString: spendKey,
-              newWallet: true,
-              restoreHeight: restoreHeight,
-              networkType: networkType,
-            )
-            .address,
+    final worker = await Worker.spawn();
+    final walletPointerAddress = await worker.runTask<int>(
+      Task(
+        func: FuncName.restoreDeterministicWalletFromSpendKey,
+        args: {
+          "wm": _walletManagerPointerAddress,
+          "path": path,
+          "pw": password,
+          "lang": language,
+          "sp": spendKey,
+          "net": networkType.value,
+          "height": restoreHeight,
+        },
       ),
     );
 
-    xmr_ffi.checkWalletStatus(walletPointer);
-
-    final wallet = MoneroWallet._(walletPointer);
-    await wallet.save();
+    final wallet = MoneroWallet._(walletPointerAddress, worker);
     return wallet;
   }
 
@@ -465,10 +458,7 @@ class MoneroWallet extends Wallet {
   /// ### Parameters:
   /// - **path** (`String`, required): The file path to the existing wallet file to be loaded.
   /// - **password** (`String`, required): The password used to decrypt the wallet file.
-  /// - **networkType** (`int`, optional): Specifies the Monero network type:
-  ///   - `0`: Mainnet (default)
-  ///   - `1`: Testnet
-  ///   - `2`: Stagenet
+  /// - **networkType** (`Network`, required): Specifies the Monero network type.
   ///
   /// ### Returns:
   /// An instance of [MoneroWallet] representing the loaded wallet.
@@ -478,7 +468,7 @@ class MoneroWallet extends Wallet {
   /// final wallet = MoneroWallet.loadWallet(
   ///   path: '/path/to/existing_wallet',
   ///   password: 'secure_password',
-  ///   networkType: 0,
+  ///   networkType: Network.mainnet,
   /// );
   /// ```
   ///
@@ -488,33 +478,29 @@ class MoneroWallet extends Wallet {
   static Future<MoneroWallet> loadWallet({
     required String path,
     required String password,
-    int networkType = 0,
+    required Network networkType,
   }) async {
-    final walletManagerPointerAddress = _walletManagerPointer.address;
-    final walletPointer = Pointer<Void>.fromAddress(
-      await Isolate.run(
-        () => xmr_wm_ffi
-            .openWallet(
-              Pointer.fromAddress(walletManagerPointerAddress),
-              path: path,
-              password: password,
-              networkType: networkType,
-            )
-            .address,
+    final worker = await Worker.spawn();
+    final walletPointerAddress = await worker.runTask<int>(
+      Task(
+        func: FuncName.loadWallet,
+        args: {
+          "wm": _walletManagerPointerAddress,
+          "path": path,
+          "pw": password,
+          "net": networkType.value,
+        },
       ),
     );
 
-    xmr_ffi.checkWalletStatus(walletPointer);
-
-    final wallet = MoneroWallet._(walletPointer);
-
+    final wallet = MoneroWallet._(walletPointerAddress, worker);
     return wallet;
   }
 
   // ===========================================================================
   // special check to see if wallet exists
   static bool isWalletExist(String path) => xmr_wm_ffi.walletExists(
-        _walletManagerPointer,
+        Pointer<Void>.fromAddress(_walletManagerPointerAddress),
         path,
       );
 
@@ -523,47 +509,49 @@ class MoneroWallet extends Wallet {
 
   @override
   @protected
-  Future<void> refreshOutputs() async {
-    _coinsPointer = xmr_ffi.getCoinsPointer(_getWalletPointer());
-    final pointerAddress = _coinsPointer!.address;
-    await Isolate.run(() {
-      xmr_ffi.refreshCoins(
-        Pointer.fromAddress(
-          pointerAddress,
+  Future<void> refreshOutputs() => _worker.runTask(
+        Task(
+          func: FuncName.refreshCoins,
+          args: {
+            "wp": _getWalletPointer(),
+          },
         ),
       );
-    });
-  }
 
   @override
   @protected
-  Future<void> refreshTransactions() async {
-    _transactionHistoryPointer = xmr_ffi.getTransactionHistoryPointer(
-      _getWalletPointer(),
-    );
-    final pointerAddress = _transactionHistoryPointer!.address;
-
-    await Isolate.run(() {
-      xmr_ffi.refreshTransactionHistory(
-        Pointer.fromAddress(
-          pointerAddress,
+  Future<void> refreshTransactions() => _worker.runTask(
+        Task(
+          func: FuncName.refreshTransactions,
+          args: {
+            "wp": _getWalletPointer(),
+          },
         ),
       );
-    });
-  }
 
   @override
   @protected
-  int transactionCount() => xmr_ffi.getTransactionHistoryCount(
-        _transactionHistoryPointer!,
+  Future<int> transactionCount() => _worker.runTask(
+        Task(
+          func: FuncName.transactionCount,
+          args: {
+            "wp": _getWalletPointer(),
+          },
+        ),
       );
 
   // ===========================================================================
   // === Overrides =============================================================
 
   @override
-  int getCurrentWalletSyncingHeight() =>
-      xmr_ffi.getWalletBlockChainHeight(_getWalletPointer());
+  Future<int> getCurrentWalletSyncingHeight() => _worker.runTask(
+        Task(
+          func: FuncName.getWalletBlockChainHeight,
+          args: {
+            "wp": _getWalletPointer(),
+          },
+        ),
+      );
 
   @override
   int getBlockChainHeightByDate(DateTime date) {
@@ -572,7 +560,7 @@ class MoneroWallet extends Wallet {
   }
 
   @override
-  Future<void> connect({
+  Future<bool> connect({
     required String daemonAddress,
     required bool trusted,
     String? daemonUsername,
@@ -580,29 +568,23 @@ class MoneroWallet extends Wallet {
     bool useSSL = false,
     bool isLightWallet = false,
     String? socksProxyAddress,
-  }) async {
+  }) {
     Logging.log?.i("init (initConnection()) node address: $daemonAddress");
-    final pointerAddress = _getWalletPointer().address;
 
-    // TODO: do something with return value?
-    // return value matters? If so, whats the point of checking status below?
-    final _ = await Isolate.run(() {
-      return xmr_ffi.initWallet(
-        Pointer.fromAddress(pointerAddress),
-        daemonAddress: daemonAddress,
-        daemonUsername: daemonUsername ?? "",
-        daemonPassword: daemonPassword ?? "",
-        proxyAddress: socksProxyAddress ?? "",
-        useSsl: useSSL,
-        lightWallet: isLightWallet,
-      );
-    });
-
-    xmr_ffi.checkWalletStatus(_getWalletPointer());
-
-    xmr_ffi.setTrustedDaemon(
-      _getWalletPointer(),
-      arg: trusted,
+    return _worker.runTask(
+      Task(
+        func: FuncName.initWallet,
+        args: {
+          "wp": _getWalletPointer(),
+          "addr": daemonAddress,
+          "u": daemonUsername ?? "",
+          "p": daemonPassword ?? "",
+          "sock": socksProxyAddress ?? "",
+          "ssl": useSSL,
+          "lite": isLightWallet,
+          "trust": trusted,
+        },
+      ),
     );
   }
 
@@ -623,10 +605,14 @@ class MoneroWallet extends Wallet {
   // }
 
   @override
-  bool isViewOnly() {
-    final isWatchOnly = xmr_ffi.isWatchOnly(_getWalletPointer());
-    return isWatchOnly;
-  }
+  Future<bool> isViewOnly() => _worker.runTask(
+        Task(
+          func: FuncName.isViewOnly,
+          args: {
+            "wp": _getWalletPointer(),
+          },
+        ),
+      );
 
   // @override
   // void setProxyUri(String proxyUri) {
@@ -635,10 +621,14 @@ class MoneroWallet extends Wallet {
 
   @override
   Future<bool> isConnectedToDaemon() async {
-    final address = _getWalletPointer().address;
-    final result = await Isolate.run(() {
-      return xmr_ffi.isConnected(Pointer.fromAddress(address));
-    });
+    final result = await _worker.runTask<int>(
+      Task(
+        func: FuncName.isConnectedToDaemon,
+        args: {
+          "wp": _getWalletPointer(),
+        },
+      ),
+    );
     return result == 1;
   }
 
@@ -648,77 +638,111 @@ class MoneroWallet extends Wallet {
     // As such, we'll just do an approximation and assume (probably wrongly so)
     // that current sync/scan height and daemon height calls will return sane
     // values.
-    final current = getCurrentWalletSyncingHeight();
-    final daemonHeight = getDaemonHeight();
+    final current = await getCurrentWalletSyncingHeight();
+    final daemonHeight = await getDaemonHeight();
 
     // if difference is less than an arbitrary low but non zero value, then make
     // the call to `Wallet_synchronized`
     if (daemonHeight > 0 && daemonHeight - current < 10) {
-      final address = _getWalletPointer().address;
-      final result = await Isolate.run(() {
-        return xmr_ffi.isSynchronized(Pointer.fromAddress(address));
-      });
-      return result;
+      return await _worker.runTask(
+        Task(
+          func: FuncName.isSynchronized,
+          args: {
+            "wp": _getWalletPointer(),
+          },
+        ),
+      );
     }
 
     return false;
   }
 
   @override
-  String getPath() {
-    final path = xmr_ffi.getWalletPath(_getWalletPointer());
-    return path;
-  }
+  Future<String> getPath() => _worker.runTask(
+        Task(
+          func: FuncName.getWalletPath,
+          args: {
+            "wp": _getWalletPointer(),
+          },
+        ),
+      );
 
   @override
-  String getSeed({String seedOffset = ""}) {
-    final polySeed = xmr_ffi.getWalletPolyseed(
-      _getWalletPointer(),
-      passphrase: seedOffset,
-    );
-    if (polySeed != "") {
-      return polySeed;
-    }
-    final legacy = xmr_ffi.getWalletSeed(
-      _getWalletPointer(),
-      seedOffset: seedOffset,
-    );
-    return legacy;
-  }
+  Future<String> getSeed({String seedOffset = ""}) => _worker.runTask(
+        Task(
+          func: FuncName.getSeed,
+          args: {
+            "wp": _getWalletPointer(),
+            "offset": seedOffset,
+          },
+        ),
+      );
 
   @override
-  String getSeedLanguage() {
-    final language = xmr_ffi.getWalletSeedLanguage(_getWalletPointer());
-    return language;
-  }
+  Future<String> getSeedLanguage() => _worker.runTask(
+        Task(
+          func: FuncName.getSeedLanguage,
+          args: {
+            "wp": _getWalletPointer(),
+          },
+        ),
+      );
 
   @override
-  String getPrivateSpendKey() {
-    return xmr_ffi.getWalletSecretSpendKey(_getWalletPointer());
-  }
+  Future<String> getPrivateSpendKey() => _worker.runTask(
+        Task(
+          func: FuncName.getPrivateSpendKey,
+          args: {
+            "wp": _getWalletPointer(),
+          },
+        ),
+      );
 
   @override
-  String getPrivateViewKey() {
-    return xmr_ffi.getWalletSecretViewKey(_getWalletPointer());
-  }
+  Future<String> getPrivateViewKey() => _worker.runTask(
+        Task(
+          func: FuncName.getPrivateViewKey,
+          args: {
+            "wp": _getWalletPointer(),
+          },
+        ),
+      );
 
   @override
-  String getPublicSpendKey() {
-    return xmr_ffi.getWalletPublicSpendKey(_getWalletPointer());
-  }
+  Future<String> getPublicSpendKey() => _worker.runTask(
+        Task(
+          func: FuncName.getPublicSpendKey,
+          args: {
+            "wp": _getWalletPointer(),
+          },
+        ),
+      );
 
   @override
-  String getPublicViewKey() {
-    return xmr_ffi.getWalletPublicViewKey(_getWalletPointer());
-  }
+  Future<String> getPublicViewKey() => _worker.runTask(
+        Task(
+          func: FuncName.getPublicViewKey,
+          args: {
+            "wp": _getWalletPointer(),
+          },
+        ),
+      );
 
   @override
-  Address getAddress({int accountIndex = 0, int addressIndex = 0}) {
+  Future<Address> getAddress({
+    int accountIndex = 0,
+    int addressIndex = 0,
+  }) async {
     final address = Address(
-      value: xmr_ffi.getWalletAddress(
-        _getWalletPointer(),
-        accountIndex: accountIndex,
-        addressIndex: addressIndex,
+      value: await _worker.runTask(
+        Task(
+          func: FuncName.getAddress,
+          args: {
+            "wp": _getWalletPointer(),
+            "idx": addressIndex,
+            "acc": accountIndex,
+          },
+        ),
       ),
       account: accountIndex,
       index: addressIndex,
@@ -728,38 +752,59 @@ class MoneroWallet extends Wallet {
   }
 
   @override
-  int getDaemonHeight() {
-    return xmr_ffi.getDaemonBlockChainHeight(_getWalletPointer());
-  }
+  Future<int> getDaemonHeight() => _worker.runTask(
+        Task(
+          func: FuncName.getDaemonBlockChainHeight,
+          args: {
+            "wp": _getWalletPointer(),
+          },
+        ),
+      );
 
   @override
-  int getRefreshFromBlockHeight() =>
-      xmr_ffi.getWalletRefreshFromBlockHeight(_getWalletPointer());
+  Future<int> getRefreshFromBlockHeight() => _worker.runTask(
+        Task(
+          func: FuncName.getWalletRefreshFromBlockHeight,
+          args: {
+            "wp": _getWalletPointer(),
+          },
+        ),
+      );
 
   @override
-  void setRefreshFromBlockHeight(int startHeight) {
-    xmr_ffi.setWalletRefreshFromBlockHeight(
-      _getWalletPointer(),
-      refreshFromBlockHeight: startHeight,
-    );
-  }
+  Future<void> setRefreshFromBlockHeight(int startHeight) => _worker.runTask(
+        Task(
+          func: FuncName.setWalletRefreshFromBlockHeight,
+          args: {
+            "wp": _getWalletPointer(),
+            "height": startHeight,
+          },
+        ),
+      );
 
   @override
-  void startSyncing({Duration interval = const Duration(seconds: 10)}) {
+  Future<void> startSyncing({Duration interval = const Duration(seconds: 10)}) {
     // 10 seconds seems to be the default in monero core
-    xmr_ffi.setWalletAutoRefreshInterval(
-      _getWalletPointer(),
-      millis: interval.inMilliseconds,
+    return _worker.runTask(
+      Task(
+        func: FuncName.startSyncing,
+        args: {
+          "wp": _getWalletPointer(),
+          "millis": interval.inMilliseconds,
+        },
+      ),
     );
-    xmr_ffi.refreshWalletAsync(_getWalletPointer());
-    xmr_ffi.startWalletRefresh(_getWalletPointer());
   }
 
   @override
-  void stopSyncing() {
-    xmr_ffi.pauseWalletRefresh(_getWalletPointer());
-    xmr_ffi.stopWallet(_getWalletPointer());
-  }
+  Future<void> stopSyncing() => _worker.runTask(
+        Task(
+          func: FuncName.stopSyncing,
+          args: {
+            "wp": _getWalletPointer(),
+          },
+        ),
+      );
 
   // /// returns true on success
   // @override
@@ -771,29 +816,40 @@ class MoneroWallet extends Wallet {
   //   return result;
   // }
 
-  /// returns true on success
   @override
-  Future<bool> rescanBlockchain() async {
-    final address = _getWalletPointer().address;
-    final result = await Isolate.run(() {
-      return xmr_ffi.rescanWalletBlockchain(Pointer.fromAddress(address));
-    });
-    return result;
-  }
-
-  @override
-  BigInt getBalance({int accountIndex = 0}) => BigInt.from(
-        xmr_ffi.getWalletBalance(
-          _getWalletPointer(),
-          accountIndex: accountIndex,
+  Future<void> rescanBlockchain() => _worker.runTask(
+        Task(
+          func: FuncName.rescanBlockchainAsync,
+          args: {
+            "wp": _getWalletPointer(),
+          },
         ),
       );
 
   @override
-  BigInt getUnlockedBalance({int accountIndex = 0}) => BigInt.from(
-        xmr_ffi.getWalletUnlockedBalance(
-          _getWalletPointer(),
-          accountIndex: accountIndex,
+  Future<BigInt> getBalance({int accountIndex = 0}) async => BigInt.from(
+        await _worker.runTask(
+          Task(
+            func: FuncName.getBalance,
+            args: {
+              "wp": _getWalletPointer(),
+              "acc": accountIndex,
+            },
+          ),
+        ),
+      );
+
+  @override
+  Future<BigInt> getUnlockedBalance({int accountIndex = 0}) async =>
+      BigInt.from(
+        await _worker.runTask(
+          Task(
+            func: FuncName.getUnlockedBalance,
+            args: {
+              "wp": _getWalletPointer(),
+              "acc": accountIndex,
+            },
+          ),
         ),
       );
 
@@ -867,20 +923,28 @@ class MoneroWallet extends Wallet {
   // }
 
   @override
-  String getTxKey(String txid) {
-    return xmr_ffi.getTxKey(_getWalletPointer(), txid: txid);
-  }
+  Future<String> getTxKey(String txid) => _worker.runTask(
+        Task(
+          func: FuncName.getTxKey,
+          args: {
+            "wp": _getWalletPointer(),
+            "txid": txid,
+          },
+        ),
+      );
 
   @override
   Future<Transaction> getTx(String txid, {bool refresh = false}) async {
-    if (refresh) {
-      await refreshTransactions();
-    }
-
-    return _transactionFrom(
-      xmr_ffi.getTransactionInfoPointerByTxid(
-        _transactionHistoryPointer!,
-        txid: txid,
+    return Transaction.fromRawMap(
+      await _worker.runTask(
+        Task(
+          func: FuncName.getTx,
+          args: {
+            "wp": _getWalletPointer(),
+            "txid": txid,
+            "refresh": refresh,
+          },
+        ),
       ),
     );
   }
@@ -890,58 +954,45 @@ class MoneroWallet extends Wallet {
     required Set<String> txids,
     bool refresh = false,
   }) async {
-    if (txids.isEmpty) {
-      return [];
-    }
+    final List<Map<String, dynamic>> txs = await _worker.runTask(
+      Task(
+        func: FuncName.getTxs,
+        args: {
+          "wp": _getWalletPointer(),
+          "refresh": refresh,
+          "txids": txids.toList(),
+        },
+      ),
+    );
 
-    if (refresh) {
-      await refreshTransactions();
-    }
-
-    final List<Transaction> result = [];
-    for (final txid in txids) {
-      result.add(await getTx(txid, refresh: false));
-    }
-    return result;
+    return txs.map(Transaction.fromRawMap).toList();
   }
 
   @override
   Future<List<Transaction>> getAllTxs({bool refresh = false}) async {
-    if (refresh) {
-      await refreshTransactions();
-    }
-
-    final size = transactionCount();
-
-    return List.generate(
-      size,
-      (index) => _transactionFrom(
-        xmr_ffi.getTransactionInfoPointer(
-          _transactionHistoryPointer!,
-          index: index,
-        ),
+    final List<Map<String, dynamic>> all = await _worker.runTask(
+      Task(
+        func: FuncName.getAllTxs,
+        args: {
+          "wp": _getWalletPointer(),
+          "refresh": refresh,
+        },
       ),
     );
+
+    return all.map(Transaction.fromRawMap).toList();
   }
 
   @override
-  Future<List<String>> getAllTxids({bool refresh = false}) async {
-    if (refresh) {
-      await refreshTransactions();
-    }
-
-    final size = transactionCount();
-
-    return List.generate(
-      size,
-      (index) => xmr_ffi.getTransactionInfoHash(
-        xmr_ffi.getTransactionInfoPointer(
-          _transactionHistoryPointer!,
-          index: index,
+  Future<List<String>> getAllTxids({bool refresh = false}) => _worker.runTask(
+        Task(
+          func: FuncName.getAllTxids,
+          args: {
+            "wp": _getWalletPointer(),
+            "refresh": refresh,
+          },
         ),
-      ),
-    );
-  }
+      );
 
   @override
   Future<List<Output>> getOutputs({
@@ -949,49 +1000,18 @@ class MoneroWallet extends Wallet {
     bool refresh = false,
   }) async {
     try {
-      if (refresh) {
-        await refreshOutputs();
-      }
-      final count = xmr_ffi.getCoinsCount(_coinsPointer!);
+      final List<Map<String, dynamic>> all = await _worker.runTask(
+        Task(
+          func: FuncName.getOutputs,
+          args: {
+            "wp": _getWalletPointer(),
+            "refresh": refresh,
+            "includeSpent": includeSpent,
+          },
+        ),
+      );
 
-      Logging.log?.i("monero outputs found=$count");
-
-      final List<Output> result = [];
-
-      for (int i = 0; i < count; i++) {
-        final coinInfoPointer = xmr_ffi.getCoinInfoPointer(_coinsPointer!, i);
-
-        final hash = xmr_ffi.getHashForCoinsInfo(coinInfoPointer);
-
-        if (hash.isNotEmpty) {
-          final spent = xmr_ffi.isSpentCoinsInfo(coinInfoPointer);
-
-          if (includeSpent || !spent) {
-            final utxo = Output(
-              address: xmr_ffi.getAddressForCoinsInfo(coinInfoPointer),
-              hash: hash,
-              keyImage: xmr_ffi.getKeyImageForCoinsInfo(coinInfoPointer),
-              value:
-                  BigInt.from(xmr_ffi.getAmountForCoinsInfo(coinInfoPointer)),
-              isFrozen: xmr_ffi.isFrozenCoinsInfo(coinInfoPointer),
-              isUnlocked: xmr_ffi.isUnlockedCoinsInfo(coinInfoPointer),
-              vout: xmr_ffi.getInternalOutputIndexForCoinsInfo(coinInfoPointer),
-              spent: spent,
-              spentHeight: spent
-                  ? xmr_ffi.getSpentHeightForCoinsInfo(coinInfoPointer)
-                  : null,
-              height: xmr_ffi.getBlockHeightForCoinsInfo(coinInfoPointer),
-              coinbase: xmr_ffi.isCoinbaseCoinsInfo(coinInfoPointer),
-            );
-
-            result.add(utxo);
-          }
-        } else {
-          Logging.log?.w("Found empty hash in monero utxo?!");
-        }
-      }
-
-      return result;
+      return all.map(Output.fromRawMap).toList();
     } catch (e, s) {
       Logging.log?.w("getOutputs failed", error: e, stackTrace: s);
       rethrow;
@@ -1002,71 +1022,50 @@ class MoneroWallet extends Wallet {
   Future<bool> exportKeyImages({
     required String filename,
     bool all = false,
-  }) async {
-    final pointerAddress = _getWalletPointer().address;
-    return await Isolate.run(() {
-      return xmr_ffi.exportWalletKeyImages(
-        Pointer<Void>.fromAddress(pointerAddress),
-        filename,
-        all: all,
+  }) =>
+      _worker.runTask(
+        Task(
+          func: FuncName.exportKeyImages,
+          args: {
+            "wp": _getWalletPointer(),
+            "all": all,
+            "fname": filename,
+          },
+        ),
       );
-    });
-  }
 
   @override
-  Future<bool> importKeyImages({required String filename}) async {
-    final pointerAddress = _getWalletPointer().address;
-    return await Isolate.run(() {
-      return xmr_ffi.importWalletKeyImages(
-        Pointer<Void>.fromAddress(pointerAddress),
-        filename,
+  Future<bool> importKeyImages({required String filename}) => _worker.runTask(
+        Task(
+          func: FuncName.importKeyImages,
+          args: {
+            "wp": _getWalletPointer(),
+            "fname": filename,
+          },
+        ),
       );
-    });
-  }
 
   @override
-  Future<void> freezeOutput(String keyImage) async {
-    if (keyImage.isEmpty) {
-      throw Exception("Attempted freeze of empty keyImage.");
-    }
-
-    final count = xmr_ffi.getAllCoinsSize(_coinsPointer!);
-    for (int i = 0; i < count; i++) {
-      if (keyImage ==
-          xmr_ffi.getKeyImageForCoinsInfo(
-            xmr_ffi.getCoinInfoPointer(_coinsPointer!, i),
-          )) {
-        xmr_ffi.freezeCoin(_coinsPointer!, index: i);
-        return;
-      }
-    }
-
-    throw Exception(
-      "Can't freeze utxo for the gen keyImage if it cannot be found. *points at temple*",
-    );
-  }
+  Future<void> freezeOutput(String keyImage) => _worker.runTask(
+        Task(
+          func: FuncName.freezeOutput,
+          args: {
+            "wp": _getWalletPointer(),
+            "ki": keyImage,
+          },
+        ),
+      );
 
   @override
-  Future<void> thawOutput(String keyImage) async {
-    if (keyImage.isEmpty) {
-      throw Exception("Attempted thaw of empty keyImage.");
-    }
-
-    final count = xmr_ffi.getAllCoinsSize(_coinsPointer!);
-    for (int i = 0; i < count; i++) {
-      if (keyImage ==
-          xmr_ffi.getKeyImageForCoinsInfo(
-            xmr_ffi.getCoinInfoPointer(_coinsPointer!, i),
-          )) {
-        xmr_ffi.thawCoin(_coinsPointer!, index: i);
-        return;
-      }
-    }
-
-    throw Exception(
-      "Can't thaw utxo for the gen keyImage if it cannot be found. *points at temple*",
-    );
-  }
+  Future<void> thawOutput(String keyImage) => _worker.runTask(
+        Task(
+          func: FuncName.thawOutput,
+          args: {
+            "wp": _getWalletPointer(),
+            "ki": keyImage,
+          },
+        ),
+      );
 
   @override
   Future<PendingTransaction> createTx({
@@ -1090,31 +1089,28 @@ class MoneroWallet extends Wallet {
     final inputsToUse = preferredInputs ?? <Output>[];
 
     try {
-      final walletPointerAddress = _getWalletPointer().address;
-      final pendingTxPointer = Pointer<Void>.fromAddress(
-        await Isolate.run(() {
-          final tx = xmr_ffi.createTransaction(
-            Pointer.fromAddress(walletPointerAddress),
-            address: output.address,
-            paymentId: paymentId,
-            amount: sweep ? 0 : output.amount.toInt(),
-            pendingTransactionPriority: priority.value,
-            subaddressAccount: accountIndex,
-            preferredInputs: inputsToUse.map((e) => e.keyImage).toList(),
-          );
-          return tx.address;
-        }),
+      final pending = await _worker.runTask<Map<String, dynamic>>(
+        Task(
+          func: FuncName.createTransaction,
+          args: {
+            "wp": _getWalletPointer(),
+            "addr": output.address,
+            "amt": output.amount.toInt(),
+            "acc": accountIndex,
+            "prio": priority.value,
+            "pid": paymentId,
+            "sweep": sweep,
+            "kis": inputsToUse.map((e) => e.keyImage).toList(),
+          },
+        ),
       );
 
-      xmr_ffi.checkPendingTransactionStatus(pendingTxPointer);
-
       return PendingTransaction(
-        amount:
-            BigInt.from(xmr_ffi.getPendingTransactionAmount(pendingTxPointer)),
-        fee: BigInt.from(xmr_ffi.getPendingTransactionFee(pendingTxPointer)),
-        txid: xmr_ffi.getPendingTransactionTxid(pendingTxPointer),
-        hex: xmr_ffi.getPendingTransactionHex(pendingTxPointer),
-        pointerAddress: pendingTxPointer.address,
+        amount: BigInt.from(pending["amount"] as int),
+        fee: BigInt.from(pending["fee"] as int),
+        txid: pending["txid"] as String,
+        hex: pending["hex"] as String,
+        pointerAddress: pending["pointerAddress"] as int,
       );
     } finally {
       if (processedInputs != null) {
@@ -1148,36 +1144,28 @@ class MoneroWallet extends Wallet {
     final inputsToUse = preferredInputs ?? <Output>[];
 
     try {
-      final walletPointerAddress = _getWalletPointer().address;
-      final pendingTxPointer = Pointer<Void>.fromAddress(
-        await Isolate.run(() {
-          final tx = xmr_ffi.createTransactionMultiDest(
-            Pointer.fromAddress(walletPointerAddress),
-            paymentId: paymentId,
-            addresses: outputs.map((e) => e.address).toList(),
-            isSweepAll: sweep,
-            amounts: outputs.map((e) => e.amount.toInt()).toList(),
-            pendingTransactionPriority: priority.value,
-            subaddressAccount: accountIndex,
-            preferredInputs: inputsToUse.map((e) => e.keyImage).toList(),
-          );
-          return tx.address;
-        }),
+      final pending = await _worker.runTask<Map<String, dynamic>>(
+        Task(
+          func: FuncName.createTransactionMultiDest,
+          args: {
+            "wp": _getWalletPointer(),
+            "addrs": outputs.map((e) => e.address).toList(),
+            "amts": outputs.map((e) => e.amount.toInt()).toList(),
+            "acc": accountIndex,
+            "prio": priority.value,
+            "pid": paymentId,
+            "sweep": sweep,
+            "kis": inputsToUse.map((e) => e.keyImage).toList(),
+          },
+        ),
       );
 
-      xmr_ffi.checkPendingTransactionStatus(pendingTxPointer);
-
       return PendingTransaction(
-        amount:
-            BigInt.from(xmr_ffi.getPendingTransactionAmount(pendingTxPointer)),
-        fee: BigInt.from(xmr_ffi.getPendingTransactionFee(pendingTxPointer)),
-        txid: xmr_ffi.getPendingTransactionTxid(
-          pendingTxPointer,
-        ),
-        hex: xmr_ffi.getPendingTransactionHex(
-          pendingTxPointer,
-        ),
-        pointerAddress: pendingTxPointer.address,
+        amount: BigInt.from(pending["amount"] as int),
+        fee: BigInt.from(pending["fee"] as int),
+        txid: pending["txid"] as String,
+        hex: pending["hex"] as String,
+        pointerAddress: pending["pointerAddress"] as int,
       );
     } finally {
       if (processedInputs != null) {
@@ -1187,54 +1175,48 @@ class MoneroWallet extends Wallet {
   }
 
   @override
-  Future<void> commitTx(PendingTransaction tx) async {
-    // TODO: check if the return value should be used in any way or if it is ok to rely on the status check below?
-    final _ = await Isolate.run(() {
-      return xmr_ffi.commitPendingTransaction(
-        Pointer<Void>.fromAddress(
-          tx.pointerAddress,
+  Future<bool> commitTx(PendingTransaction tx) => _worker.runTask(
+        Task(
+          func: FuncName.commitTx,
+          args: {
+            "ptr": tx.pointerAddress,
+          },
         ),
       );
-    });
-
-    xmr_ffi.checkPendingTransactionStatus(
-      Pointer<Void>.fromAddress(
-        tx.pointerAddress,
-      ),
-    );
-  }
 
   @override
   Future<String> signMessage(
     String message,
     String address,
-  ) async {
-    final pointerAddress = _getWalletPointer().address;
-    return await Isolate.run(() {
-      return xmr_ffi.signMessageWith(
-        Pointer.fromAddress(pointerAddress),
-        message: message,
-        address: address,
+  ) =>
+      _worker.runTask(
+        Task(
+          func: FuncName.signMessage,
+          args: {
+            "wp": _getWalletPointer(),
+            "msg": message,
+            "addr": address,
+          },
+        ),
       );
-    });
-  }
 
   @override
   Future<bool> verifyMessage(
     String message,
     String address,
     String signature,
-  ) async {
-    final pointerAddress = _getWalletPointer().address;
-    return await Isolate.run(() {
-      return xmr_ffi.verifySignedMessageWithWallet(
-        Pointer.fromAddress(pointerAddress),
-        message: message,
-        address: address,
-        signature: signature,
+  ) =>
+      _worker.runTask(
+        Task(
+          func: FuncName.verifyMessage,
+          args: {
+            "wp": _getWalletPointer(),
+            "msg": message,
+            "addr": address,
+            "sig": signature,
+          },
+        ),
       );
-    });
-  }
 
   // @override
   // String getPaymentUri(TxConfig request) {
@@ -1242,7 +1224,22 @@ class MoneroWallet extends Wallet {
   // }
 
   @override
-  BigInt? amountFromString(String value) {
+  Future<bool> validateAddress(
+    String address, {
+    required Network networkType,
+  }) =>
+      _worker.runTask(
+        Task(
+          func: FuncName.validateAddress,
+          args: {
+            "addr": address,
+            "net": networkType.value,
+          },
+        ),
+      );
+
+  @override
+  Future<BigInt?> amountFromString(String value) async {
     try {
       // not sure what protections or validation is done internally
       // so lets do some extra for now
@@ -1250,7 +1247,16 @@ class MoneroWallet extends Wallet {
 
       // if that parse succeeded the following should produce a valid result
 
-      return BigInt.from(xmr_ffi.amountFromString(value));
+      return BigInt.from(
+        await _worker.runTask(
+          Task(
+            func: FuncName.amountFromString,
+            args: {
+              "amt": value,
+            },
+          ),
+        ),
+      );
     } catch (e, s) {
       Logging.log?.w(
         "amountFromString failed to parse \"$value\"",
@@ -1262,22 +1268,35 @@ class MoneroWallet extends Wallet {
   }
 
   @override
-  String getPassword() {
-    return xmr_ffi.getWalletPassword(_getWalletPointer());
-  }
+  Future<String> getPassword() => _worker.runTask(
+        Task(
+          func: FuncName.getPassword,
+          args: {
+            "wp": _getWalletPointer(),
+          },
+        ),
+      );
 
   @override
-  void changePassword(String newPassword) {
-    xmr_ffi.setWalletPassword(_getWalletPointer(), password: newPassword);
-  }
+  Future<bool> changePassword(String newPassword) => _worker.runTask(
+        Task(
+          func: FuncName.changePassword,
+          args: {
+            "wp": _getWalletPointer(),
+            "pw": newPassword,
+          },
+        ),
+      );
 
   @override
-  Future<void> save() async {
-    final pointerAddress = _getWalletPointer().address;
-    await Isolate.run(() {
-      xmr_ffi.storeWallet(Pointer.fromAddress(pointerAddress), path: "");
-    });
-  }
+  Future<void> save() => _worker.runTask(
+        Task(
+          func: FuncName.save,
+          args: {
+            "wp": _getWalletPointer(),
+          },
+        ),
+      );
 
   // TODO probably get rid of this. Not a good API/Design
   bool isClosing = false;
@@ -1285,14 +1304,19 @@ class MoneroWallet extends Wallet {
   Future<void> close({bool save = false}) async {
     if (isClosed() || isClosing) return;
     isClosing = true;
-    stopSyncing();
-    stopListeners();
+    await stopSyncing();
+    await stopListeners();
 
-    if (save) {
-      await this.save();
-    }
-
-    xmr_wm_ffi.closeWallet(_walletManagerPointer, _getWalletPointer(), save);
+    await _worker.runTask<void>(
+      Task(
+        func: FuncName.close,
+        args: {
+          "wm": _walletManagerPointerAddress,
+          "wp": _getWalletPointer(),
+          "save": save,
+        },
+      ),
+    );
     _walletPointer = null;
     isClosing = false;
   }
