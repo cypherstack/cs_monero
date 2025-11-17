@@ -3,6 +3,25 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 2025-11-17
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`cs_monero` - `v3.2.0`](#cs_monero---v320)
+
+---
+
+#### `cs_monero` - `v3.2.0`
+
+
 ## 2025-11-12
 
 ### Changes

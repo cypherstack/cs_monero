@@ -1,3 +1,5 @@
+## 3.2.0
+
 ## 3.1.0
 
  - **FIX**: cancel listeners. ([fd79ca5a](https://github.com/cypherstack/cs_monero/commit/fd79ca5a7f08ef4bbbb6bf786058cb0007b19b5b))
