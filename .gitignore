@@ -13,3 +13,7 @@ coverage/
 
 pubspec.lock
 pubspec_overrides.yaml
+
+# Guix-fetched Flutter SDK
+.flutter-sdk/
+.flutter-sdk
