@@ -19,8 +19,6 @@ void main() async {
     await runAsync('git', [
       'clone',
       kMoneroCRepo,
-      '--branch',
-      'apple-frameworks',
     ]);
 
     // Change directory to MONERO_C_DIR
