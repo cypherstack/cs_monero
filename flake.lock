@@ -1,0 +1,189 @@
+{
+  "nodes": {
+    "bc-ur": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1716291132,
+        "narHash": "sha256-96mD5YqlJd4R5lRbavxREwaEdxp/o1bUeOjh+FEkXTw=",
+        "ref": "refs/heads/master",
+        "rev": "d82e7c753e710b8000706dc3383b498438795208",
+        "revCount": 41,
+        "type": "git",
+        "url": "https://github.com/MrCyjaneK/bc-ur"
+      },
+      "original": {
+        "rev": "d82e7c753e710b8000706dc3383b498438795208",
+        "type": "git",
+        "url": "https://github.com/MrCyjaneK/bc-ur"
+      }
+    },
+    "miniupnp": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1608487878,
+        "narHash": "sha256-opd0hcZV+pjC3Mae3Yf6AR5fj6xVwGm9LuU5zEPxBKc=",
+        "owner": "miniupnp",
+        "repo": "miniupnp",
+        "rev": "544e6fcc73c5ad9af48a8985c94f0f1d742ef2e0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "miniupnp",
+        "repo": "miniupnp",
+        "rev": "544e6fcc73c5ad9af48a8985c94f0f1d742ef2e0",
+        "type": "github"
+      }
+    },
+    "monero": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1739816623,
+        "narHash": "sha256-g34A4rvvvfuoHjAtYJuI7nOe/cck+DAM2WejEWWyKjs=",
+        "owner": "monero-project",
+        "repo": "monero",
+        "rev": "0232839913b13cf0ab0bb7ad25fff0c05f37d2fe",
+        "type": "github"
+      },
+      "original": {
+        "owner": "monero-project",
+        "repo": "monero",
+        "rev": "0232839913b13cf0ab0bb7ad25fff0c05f37d2fe",
+        "type": "github"
+      }
+    },
+    "monero-c": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1757526601,
+        "narHash": "sha256-N/qtmNqPzirBloQbCcEf4I+gvvKsQPMzn4MuPgE1sEI=",
+        "ref": "refs/heads/develop",
+        "rev": "07f7a7f80735130ebfa5842ddee5139076408c0d",
+        "revCount": 356,
+        "type": "git",
+        "url": "https://github.com/MrCyjaneK/monero_c"
+      },
+      "original": {
+        "rev": "07f7a7f80735130ebfa5842ddee5139076408c0d",
+        "type": "git",
+        "url": "https://github.com/MrCyjaneK/monero_c"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1787498568,
+        "narHash": "sha256-9i/VTdusq/+NM/tz+J1Re+ojkMB8MBf0QshnYfzHz30=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "56c02bc00adcf003215cc4bd996d6efaf4cff188",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "polyseed": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1731674202,
+        "narHash": "sha256-Vuo2FydkCNnS7OrkcevjZsqz49RzLiRq48BIg37K/AQ=",
+        "ref": "refs/heads/master",
+        "rev": "bd79f5014c331273357277ed8a3d756fb61b9fa1",
+        "revCount": 46,
+        "type": "git",
+        "url": "https://github.com/tevador/polyseed"
+      },
+      "original": {
+        "rev": "bd79f5014c331273357277ed8a3d756fb61b9fa1",
+        "type": "git",
+        "url": "https://github.com/tevador/polyseed"
+      }
+    },
+    "randomx": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1712245018,
+        "narHash": "sha256-qEEyVSBxmpicIUdELVFqwR+Pw0UdmT3tXGVYpTXYDYc=",
+        "ref": "refs/heads/master",
+        "rev": "ce72c9bb9cb799e0d9171094b9abb009e04c5bfc",
+        "revCount": 474,
+        "type": "git",
+        "url": "https://github.com/MrCyjaneK/RandomX"
+      },
+      "original": {
+        "rev": "ce72c9bb9cb799e0d9171094b9abb009e04c5bfc",
+        "type": "git",
+        "url": "https://github.com/MrCyjaneK/RandomX"
+      }
+    },
+    "rapidjson": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1530620904,
+        "narHash": "sha256-8bOIOmPL2uC6tic1s5MEBgxLRpI2wsyJvkcyzvygHBQ=",
+        "owner": "Tencent",
+        "repo": "rapidjson",
+        "rev": "129d19ba7f496df5e33658527a7158c79b99c21c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Tencent",
+        "repo": "rapidjson",
+        "rev": "129d19ba7f496df5e33658527a7158c79b99c21c",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "bc-ur": "bc-ur",
+        "miniupnp": "miniupnp",
+        "monero": "monero",
+        "monero-c": "monero-c",
+        "nixpkgs": "nixpkgs",
+        "polyseed": "polyseed",
+        "randomx": "randomx",
+        "rapidjson": "rapidjson",
+        "supercop": "supercop",
+        "utf8proc": "utf8proc"
+      }
+    },
+    "supercop": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1598473549,
+        "narHash": "sha256-26UmESotSWnQ21VbAYEappLpkEMyl0jiuCaezRYd/sE=",
+        "owner": "monero-project",
+        "repo": "supercop",
+        "rev": "633500ad8c8759995049ccd022107d1fa8a1bbc9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "monero-project",
+        "repo": "supercop",
+        "rev": "633500ad8c8759995049ccd022107d1fa8a1bbc9",
+        "type": "github"
+      }
+    },
+    "utf8proc": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1725035949,
+        "narHash": "sha256-DNnrKLwks3hP83K56Yjh9P3cVbivzssblKIx4M/RKqw=",
+        "ref": "refs/heads/master",
+        "rev": "3de4596fbe28956855df2ecb3c11c0bbc3535838",
+        "revCount": 308,
+        "type": "git",
+        "url": "https://github.com/JuliaStrings/utf8proc"
+      },
+      "original": {
+        "rev": "3de4596fbe28956855df2ecb3c11c0bbc3535838",
+        "type": "git",
+        "url": "https://github.com/JuliaStrings/utf8proc"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
