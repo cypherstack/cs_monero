@@ -3,6 +3,14 @@ import 'dart:io';
 import '../env.dart';
 import '../util.dart';
 
+const gitNetworkEnvironment = <String, String>{
+  'GIT_CONFIG_COUNT': '2',
+  'GIT_CONFIG_KEY_0': 'http.version',
+  'GIT_CONFIG_VALUE_0': 'HTTP/1.1',
+  'GIT_CONFIG_KEY_1': 'submodule.fetchJobs',
+  'GIT_CONFIG_VALUE_1': '1',
+};
+
 void main() async {
   await createBuildDirs();
 
@@ -16,10 +24,11 @@ void main() async {
     Directory.current = envBuildDir;
 
     // Clone the monero_c repository
-    await runAsync('git', [
-      'clone',
-      kMoneroCRepo,
-    ]);
+    await runAsync(
+      'git',
+      ['clone', kMoneroCRepo],
+      environment: gitNetworkEnvironment,
+    );
 
     // Change directory to MONERO_C_DIR
     Directory.current = moneroCDir;
@@ -29,13 +38,26 @@ void main() async {
     await runAsync('git', ['reset', '--hard']);
 
     // Update submodules
-    await runAsync(
+    await runAsyncWithRetries(
       'git',
-      ['submodule', 'update', '--init', '--force', '--recursive'],
+      [
+        'submodule',
+        'update',
+        '--init',
+        '--force',
+        '--recursive',
+        '--',
+        'monero',
+      ],
+      environment: gitNetworkEnvironment,
     );
 
     // Apply patches
-    await runAsync('./apply_patches.sh', ['monero']);
+    await runAsync(
+      './apply_patches.sh',
+      ['monero'],
+      environment: gitNetworkEnvironment,
+    );
 
     // Apply AV patches to monero_c.
     final moneroAVPatchPath = '$envProjectDir/patches/fix-monero-av.patch';

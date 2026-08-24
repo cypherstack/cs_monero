@@ -180,6 +180,8 @@ jobs:
         env:
           REQUESTED_MODE: ${{ inputs.mode }}
         run: |
+          mkdir -p reproducibility/results
+          set -o pipefail
           mode="$REQUESTED_MODE"
           if [ -z "$mode" ] || [ "$mode" = auto ]; then
             if [ -f reproducibility/manifests/macos.sha256 ]; then
@@ -188,7 +190,8 @@ jobs:
               mode=record
             fi
           fi
-          dart run melos run "repro:$mode:macos"
+          dart run melos run "repro:$mode:macos" 2>&1 |
+            tee reproducibility/results/macos.build.log
 
       - name: Upload macOS artifacts and manifests
         if: always()
@@ -242,6 +245,8 @@ jobs:
         env:
           REQUESTED_MODE: ${{ inputs.mode }}
         run: |
+          mkdir -p reproducibility/results
+          set -o pipefail
           mode="$REQUESTED_MODE"
           if [ -z "$mode" ] || [ "$mode" = auto ]; then
             if [ -f reproducibility/manifests/windows.sha256 ]; then
@@ -250,7 +255,8 @@ jobs:
               mode=record
             fi
           fi
-          dart run melos run "repro:$mode:windows"
+          dart run melos run "repro:$mode:windows" 2>&1 |
+            tee reproducibility/results/windows.build.log
 
       - name: Upload Windows artifacts and manifests
         if: always()
