@@ -92,6 +92,7 @@
 
             cmakeFlags = [
               "-DHOST_ABI=${hostAbi}"
+              "-DARCH=default"
               "-DMONERO_FLAVOR=monero"
               "-DMANUAL_SUBMODULES=ON"
               "-DUSE_DEVICE_TREZOR=OFF"
