@@ -1,0 +1,75 @@
+[package]
+name = "stack-wallet-cs-monero"
+version = "3.2.0"
+description = "Native Monero wallet C API used by Stack Wallet"
+license = "BSD-3-Clause"
+website = "https://github.com/cypherstack/cs_monero"
+
+[sources.monero_c]
+version = "07f7a7f80735130ebfa5842ddee5139076408c0d"
+git_sha = "07f7a7f80735130ebfa5842ddee5139076408c0d"
+hash = "e1772cae050a3d9a4cfedc6cd28f35660839c364ac3e5b1be002d7ced681e3dc"
+file = "monero_c-{version}.tar.gz"
+mirrors = ["https://github.com/MrCyjaneK/monero_c/archive/{version}.tar.gz"]
+
+[sources.monero]
+version = "0232839913b13cf0ab0bb7ad25fff0c05f37d2fe"
+git_sha = "0232839913b13cf0ab0bb7ad25fff0c05f37d2fe"
+hash = "97d243daf7b18baa3c316f48070e0534c019b17a7e19a25fc81e912db4de15a5"
+file = "monero-{version}.tar.gz"
+mirrors = ["https://github.com/monero-project/monero/archive/{version}.tar.gz"]
+
+[sources.miniupnp]
+version = "544e6fcc73c5ad9af48a8985c94f0f1d742ef2e0"
+git_sha = "544e6fcc73c5ad9af48a8985c94f0f1d742ef2e0"
+hash = "43de1b5ec5fa052973e12e70ea93d19297733225ce71314b712cb8a18fba9ad7"
+file = "miniupnp-{version}.tar.gz"
+mirrors = ["https://github.com/miniupnp/miniupnp/archive/{version}.tar.gz"]
+
+[sources.rapidjson]
+version = "129d19ba7f496df5e33658527a7158c79b99c21c"
+git_sha = "129d19ba7f496df5e33658527a7158c79b99c21c"
+hash = "44b007d419ac21b6affec58991e865ee572346ead19b73cf1c3e4e11c7a81273"
+file = "rapidjson-{version}.tar.gz"
+mirrors = ["https://github.com/Tencent/rapidjson/archive/{version}.tar.gz"]
+
+[sources.supercop]
+version = "633500ad8c8759995049ccd022107d1fa8a1bbc9"
+git_sha = "633500ad8c8759995049ccd022107d1fa8a1bbc9"
+hash = "b973b9d8269ec4d97c3c3443f0dad96d09f72b1b30e616e0947557adbdbb03f7"
+file = "supercop-{version}.tar.gz"
+mirrors = ["https://github.com/monero-project/supercop/archive/{version}.tar.gz"]
+
+[sources.randomx]
+version = "ce72c9bb9cb799e0d9171094b9abb009e04c5bfc"
+git_sha = "ce72c9bb9cb799e0d9171094b9abb009e04c5bfc"
+hash = "97c66fedde45e9fcece2efdf29663db5b15fa76d12f7ca04f5459260dcb25438"
+file = "randomx-{version}.tar.gz"
+mirrors = ["https://github.com/MrCyjaneK/RandomX/archive/{version}.tar.gz"]
+
+[sources.bc_ur]
+version = "d82e7c753e710b8000706dc3383b498438795208"
+git_sha = "d82e7c753e710b8000706dc3383b498438795208"
+hash = "8a56f89bb7d2015a7e71f231aec11d8c03eb0aa6a418e2dcce449c6b700ba113"
+file = "bc-ur-{version}.tar.gz"
+mirrors = ["https://github.com/MrCyjaneK/bc-ur/archive/{version}.tar.gz"]
+
+[sources.polyseed]
+version = "bd79f5014c331273357277ed8a3d756fb61b9fa1"
+git_sha = "bd79f5014c331273357277ed8a3d756fb61b9fa1"
+hash = "8908cd7725c7b5fed24260e3496d0cad17863a70436c347c9e9625205df2fe09"
+file = "polyseed-{version}.tar.gz"
+mirrors = ["https://github.com/tevador/polyseed/archive/{version}.tar.gz"]
+
+[sources.utf8proc]
+version = "3de4596fbe28956855df2ecb3c11c0bbc3535838"
+git_sha = "3de4596fbe28956855df2ecb3c11c0bbc3535838"
+hash = "fb4a16bb659b58afb7f921fcc8928d0b3c1fcab135366c8a4f9ca7de1b1cfada"
+file = "utf8proc-{version}.tar.gz"
+mirrors = ["https://github.com/JuliaStrings/utf8proc/archive/{version}.tar.gz"]
+
+[sources.unbound]
+version = "1.25.2"
+hash = "e132aa8b46cd3bc79bc97c2c42abf2b62aaa4c8aaef786c91d549e335ae8a5cf"
+file = "unbound-{version}.tar.gz"
+mirrors = ["https://github.com/NLnetLabs/unbound/archive/refs/tags/release-{version}.tar.gz"]

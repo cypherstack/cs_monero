@@ -1,0 +1,126 @@
+FROM stagex/pallet-clang-cmake-busybox AS build
+COPY --from=stagex/core-git . /
+COPY --from=stagex/core-make . /
+COPY --from=stagex/core-m4 . /
+COPY --from=stagex/core-bison . /
+COPY --from=stagex/core-flex . /
+COPY --from=stagex/core-boost . /
+COPY --from=stagex/core-readline . /
+COPY --from=stagex/core-expat . /
+COPY --from=stagex/user-libevent . /
+COPY --from=stagex/user-libsodium . /
+COPY --from=stagex/user-zeromq . /
+ARG TARGETARCH
+ARG MONERO_C_VERSION
+ARG MONERO_VERSION
+ARG MINIUPNP_VERSION
+ARG RAPIDJSON_VERSION
+ARG SUPERCOP_VERSION
+ARG RANDOMX_VERSION
+ARG BC_UR_VERSION
+ARG POLYSEED_VERSION
+ARG UTF8PROC_VERSION
+ARG UNBOUND_VERSION
+ADD fetch/monero_c-${MONERO_C_VERSION}.tar.gz /
+ADD fetch/monero-${MONERO_VERSION}.tar.gz /
+ADD fetch/miniupnp-${MINIUPNP_VERSION}.tar.gz /
+ADD fetch/rapidjson-${RAPIDJSON_VERSION}.tar.gz /
+ADD fetch/supercop-${SUPERCOP_VERSION}.tar.gz /
+ADD fetch/randomx-${RANDOMX_VERSION}.tar.gz /
+ADD fetch/bc-ur-${BC_UR_VERSION}.tar.gz /
+ADD fetch/polyseed-${POLYSEED_VERSION}.tar.gz /
+ADD fetch/utf8proc-${UTF8PROC_VERSION}.tar.gz /
+ADD fetch/unbound-${UNBOUND_VERSION}.tar.gz /
+COPY patches/fix-monero-av.patch /tmp/fix-monero-av.patch
+ENV SOURCE_DATE_EPOCH=1
+RUN --network=none <<-EOF
+	set -eu
+	cd "/unbound-release-${UNBOUND_VERSION}"
+	./configure \
+		--prefix=/usr \
+		--disable-flto \
+		--disable-rpath \
+		--without-pyunbound \
+		--without-pythonmodule \
+		--with-libevent \
+		--with-libexpat=/usr \
+		--with-ssl=/usr
+	make
+	make install
+
+	mv "/monero_c-${MONERO_C_VERSION}" /work
+	cd /work
+	rm -rf monero
+	mv "/monero-${MONERO_VERSION}" monero
+	git -C monero init -q
+	for patch_file in patches/monero/*.patch; do
+		git -C monero apply \
+			--whitespace=nowarn \
+			--exclude=.gitmodules \
+			--exclude=external/randomx \
+			--exclude=external/bc-ur \
+			--exclude=external/polyseed \
+			--exclude=external/utf8proc \
+			"/work/${patch_file}"
+	done
+
+	rm -rf monero/external/miniupnp monero/external/rapidjson \
+		monero/external/supercop monero/external/randomx \
+		monero/external/bc-ur monero/external/polyseed \
+		monero/external/utf8proc
+	mv "/miniupnp-${MINIUPNP_VERSION}" monero/external/miniupnp
+	mv "/rapidjson-${RAPIDJSON_VERSION}" monero/external/rapidjson
+	mv "/supercop-${SUPERCOP_VERSION}" monero/external/supercop
+	mv "/RandomX-${RANDOMX_VERSION}" monero/external/randomx
+	mv "/bc-ur-${BC_UR_VERSION}" monero/external/bc-ur
+	mv "/polyseed-${POLYSEED_VERSION}" monero/external/polyseed
+	mv "/utf8proc-${UTF8PROC_VERSION}" monero/external/utf8proc
+	# Monero exports HAVE_EXPLICIT_BZERO globally, but musl's strict C11 headers
+	# do not expose bzero. Use bc-ur's volatile zeroing fallback on Linux.
+	sed -i \
+		's/#elif defined(HAVE_EXPLICIT_BZERO)/#elif defined(HAVE_EXPLICIT_BZERO) \&\& !defined(__linux__)/' \
+		monero/external/bc-ur/src/memzero.c
+	# libc++ removed the deprecated std::unary_function base in C++17. The
+	# hasher does not use its typedefs, so remove only that obsolete base.
+	sed -i \
+		's/struct array_hasher: std::unary_function<t_array&, std::size_t>/struct array_hasher/' \
+		monero/src/cryptonote_basic/cryptonote_basic_impl.h
+	# easylogging++ assumes glibc's execinfo API on every Linux target. StageX
+	# uses musl, so disable its optional stacktrace path for this native library.
+	sed -i \
+		'/#  if (ELPP_COMPILER_GCC/ s/ELPP_COMPILER_GCC/ELPP_COMPILER_GCC \&\& !defined(__linux__)/' \
+		monero/external/easylogging++/easylogging++.h
+	# Current Boost rejects enum minus-one probes under current Clang. C++17's
+	# standard trait supports both integral and enumeration types directly.
+	sed -i \
+		-e 's|#include <boost/type_traits/make_unsigned.hpp>|#include <type_traits>|' \
+		-e 's/boost::make_unsigned/std::make_unsigned/g' \
+		monero/src/serialization/binary_archive.h
+	sed -i 's/if (STATIC)/if (TRUE)/' monero/external/polyseed/CMakeLists.txt
+	git apply --whitespace=nowarn /tmp/fix-monero-av.patch
+
+	export CFLAGS="-O2 -g0 -ffile-prefix-map=/work=. -fdebug-prefix-map=/work=."
+	export CXXFLAGS="$CFLAGS"
+	export LDFLAGS="$LDFLAGS -Wl,--build-id=none"
+	cmake -S monero_libwallet2_api_c -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DHOST_ABI="${ARCH}-linux-gnu" \
+		-DARCH=default \
+		-DMONERO_FLAVOR=monero \
+		-DMANUAL_SUBMODULES=ON \
+		-DUSE_DEVICE_TREZOR=OFF \
+		-DBUILD_GUI_DEPS=ON \
+		-DBUILD_TESTS=OFF \
+		-DBUILD_DOCUMENTATION=OFF \
+		-DReadline_ROOT_DIR=/usr
+	cmake --build build
+	install -Dm755 build/libwallet2_api_c.so \
+		/rootfs/usr/lib/libmonero_libwallet2_api_c.so
+	install -Dm644 monero_libwallet2_api_c/src/main/cpp/wallet2_api_c.h \
+		/rootfs/usr/include/wallet2_api_c.h
+	install -Dm644 LICENSE \
+		/rootfs/usr/share/licenses/stack-wallet-cs-monero/LICENSE
+EOF
+
+FROM stagex/core-filesystem AS package
+COPY --from=build /rootfs/ /
