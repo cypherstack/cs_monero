@@ -190,8 +190,27 @@ jobs:
               mode=record
             fi
           fi
-          dart run melos run "repro:$mode:macos" 2>&1 |
-            tee reproducibility/results/macos.build.log
+          log_path=reproducibility/results/macos.build.log
+          set +e
+          dart run melos run "repro:$mode:macos" 2>&1 | tee "$log_path"
+          build_status=${PIPESTATUS[0]}
+          set -e
+          if [ "$build_status" -ne 0 ]; then
+            python3 - "$log_path" <<'PY'
+          import os
+          import sys
+
+          lines = open(sys.argv[1], encoding="utf-8", errors="replace").readlines()
+          tail = "".join(lines[-80:])
+          escaped = tail.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+          print(f"::error title=Native reproducibility build failed::{escaped}")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
+              summary.write("### Native reproducibility build failure\n\n```text\n")
+              summary.write(tail)
+              summary.write("\n```\n")
+          PY
+            exit "$build_status"
+          fi
 
       - name: Upload macOS artifacts and manifests
         if: always()
@@ -255,8 +274,27 @@ jobs:
               mode=record
             fi
           fi
-          dart run melos run "repro:$mode:windows" 2>&1 |
-            tee reproducibility/results/windows.build.log
+          log_path=reproducibility/results/windows.build.log
+          set +e
+          dart run melos run "repro:$mode:windows" 2>&1 | tee "$log_path"
+          build_status=${PIPESTATUS[0]}
+          set -e
+          if [ "$build_status" -ne 0 ]; then
+            python3 - "$log_path" <<'PY'
+          import os
+          import sys
+
+          lines = open(sys.argv[1], encoding="utf-8", errors="replace").readlines()
+          tail = "".join(lines[-80:])
+          escaped = tail.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+          print(f"::error title=Native reproducibility build failed::{escaped}")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
+              summary.write("### Native reproducibility build failure\n\n```text\n")
+              summary.write(tail)
+              summary.write("\n```\n")
+          PY
+            exit "$build_status"
+          fi
 
       - name: Upload Windows artifacts and manifests
         if: always()

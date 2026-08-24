@@ -189,6 +189,29 @@ Future<String> collectProvenance({
         'HEAD',
       ],
     ),
+    (
+      'monero_c status',
+      'git',
+      [
+        '-C',
+        '$projectDirectory${Platform.pathSeparator}build'
+            '${Platform.pathSeparator}monero_c',
+        'status',
+        '--short',
+      ],
+    ),
+    (
+      'monero_c submodules',
+      'git',
+      [
+        '-C',
+        '$projectDirectory${Platform.pathSeparator}build'
+            '${Platform.pathSeparator}monero_c',
+        'submodule',
+        'status',
+        '--recursive',
+      ],
+    ),
     ('uname', 'uname', ['-a']),
     ('macOS', 'sw_vers', []),
     ('Xcode', 'xcodebuild', ['-version']),
