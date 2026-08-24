@@ -35,6 +35,10 @@ proceeding.  To build the libraries yourself:
    - `melos build:windows`
 4. Run `melos copyLibs` to copy the binaries to where Flutter can find them.
 
+The existing commands above remain the release workflow. To produce or verify
+byte-for-byte hash targets while running that same workflow, see
+[REPRODUCIBLE_PRECOMPILED.md](REPRODUCIBLE_PRECOMPILED.md).
+
 ### Building notes
 - This repo's build scripts are just wrappers around `monero_c`'s build scripts.
   For details and requirements see https://github.com/MrCyjaneK/monero_c/

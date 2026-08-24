@@ -64,6 +64,50 @@ scripts:
     run: dart tools/dart/bin/build_libs.dart windows
     description: Build the android monero_c libraries
 
+  repro:nix:
+    run: ./nix/verify-reproducible.sh
+    description: Rebuild and byte-verify the pinned Linux Nix artifact
+
+  repro:record:android:
+    run: dart tools/dart/bin/reproducible_build.dart record android
+    description: Clean-build, package, and record the first Android hash baseline
+
+  repro:verify:android:
+    run: dart tools/dart/bin/reproducible_build.dart verify android
+    description: Clean-build Android and compare it with the recorded baseline
+
+  repro:record:ios:
+    run: dart tools/dart/bin/reproducible_build.dart record ios
+    description: Clean-build, package, and record the first iOS hash baseline
+
+  repro:verify:ios:
+    run: dart tools/dart/bin/reproducible_build.dart verify ios
+    description: Clean-build iOS and compare it with the recorded baseline
+
+  repro:record:linux:
+    run: dart tools/dart/bin/reproducible_build.dart record linux
+    description: Clean-build, package, and record the legacy Linux hash baseline
+
+  repro:verify:linux:
+    run: dart tools/dart/bin/reproducible_build.dart verify linux
+    description: Clean-build legacy Linux and compare it with the recorded baseline
+
+  repro:record:macos:
+    run: dart tools/dart/bin/reproducible_build.dart record macos
+    description: Clean-build, package, and record the first macOS hash baseline
+
+  repro:verify:macos:
+    run: dart tools/dart/bin/reproducible_build.dart verify macos
+    description: Clean-build macOS and compare it with the recorded baseline
+
+  repro:record:windows:
+    run: dart tools/dart/bin/reproducible_build.dart record windows
+    description: Clean-build, package, and record the first Windows hash baseline
+
+  repro:verify:windows:
+    run: dart tools/dart/bin/reproducible_build.dart verify windows
+    description: Clean-build Windows and compare it with the recorded baseline
+
   copyLibs:
     run: dart tools/dart/bin/copy_libs.dart
     description: Copy monero_c libraries to their respective package locations

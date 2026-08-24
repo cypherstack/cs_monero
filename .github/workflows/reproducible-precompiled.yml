@@ -1,0 +1,265 @@
+name: Reproducible precompiled binaries
+run-name: Reproducibility ${{ inputs.platform || 'checks' }} at ${{ github.ref_name }}
+
+on:
+  push:
+    branches:
+      - main
+      - feat/reproducible-precompiled-bins
+      - "feat/reproducible-precompiled-bins-*"
+    paths:
+      - ".github/workflows/reproducible-precompiled.yml"
+      - "**/*.a"
+      - "**/*.dll"
+      - "**/*.dylib"
+      - "**/*.so"
+      - "**/Frameworks/**"
+      - "**/jniLibs/**"
+      - "**/linux/lib/**"
+      - "**/windows/lib/**"
+      - "flake.lock"
+      - "flake.nix"
+      - "melos.yaml"
+      - "nix/**"
+      - "pubspec.yaml"
+      - "reproducibility/**"
+      - "stagex/**"
+      - "tools/dart/**"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/reproducible-precompiled.yml"
+      - "**/*.a"
+      - "**/*.dll"
+      - "**/*.dylib"
+      - "**/*.so"
+      - "**/Frameworks/**"
+      - "**/jniLibs/**"
+      - "**/linux/lib/**"
+      - "**/windows/lib/**"
+      - "flake.lock"
+      - "flake.nix"
+      - "melos.yaml"
+      - "nix/**"
+      - "pubspec.yaml"
+      - "reproducibility/**"
+      - "stagex/**"
+      - "tools/dart/**"
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Native target to build
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - macos
+          - windows
+      mode:
+        description: Record a missing baseline or verify an existing one
+        required: true
+        default: auto
+        type: choice
+        options:
+          - auto
+          - record
+          - verify
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.platform || 'checks' }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: "3.38.5"
+  STAGEX_COMMIT: "9bdf430d09ce2ba53932df0182faef00d4feecd1"
+
+jobs:
+  manifest-tool:
+    name: Manifest tool (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-24.04
+          - macos-14
+          - windows-2022
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Test canonical artifact manifests
+        run: dart tools/dart/test/reproducible_precompiled_test.dart
+
+  nix-linux:
+    name: Nix Linux byte-for-byte rebuild
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+
+      - name: Rebuild and compare
+        run: ./nix/verify-reproducible.sh
+
+  stagex-metadata:
+    name: StageX locked-source validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Checkout locked StageX
+        run: |
+          git clone https://github.com/ConYel/stagex.git "$RUNNER_TEMP/stagex"
+          git -C "$RUNNER_TEMP/stagex" checkout "$STAGEX_COMMIT"
+          ln -s "$GITHUB_WORKSPACE/stagex" \
+            "$RUNNER_TEMP/stagex/packages/user/stack-wallet-cs-monero"
+
+      - name: Verify source archives
+        working-directory: ${{ runner.temp }}/stagex
+        run: python3 src/fetch.py stack-wallet-cs-monero
+
+      - name: Lint Containerfile
+        working-directory: ${{ runner.temp }}/stagex
+        run: >-
+          python3 src/lint-containerfiles.py
+          packages/user/stack-wallet-cs-monero/Containerfile
+
+  macos-precompiled:
+    name: macOS ARM64 legacy-compatible build
+    if: >-
+      (github.event_name == 'workflow_dispatch' &&
+      (inputs.platform == 'all' || inputs.platform == 'macos')) ||
+      github.event_name == 'pull_request' ||
+      github.ref == 'refs/heads/main' ||
+      github.ref == 'refs/heads/feat/reproducible-precompiled-bins' ||
+      startsWith(github.ref,
+      'refs/heads/feat/reproducible-precompiled-bins-macos')
+    runs-on: macos-14
+    timeout-minutes: 360
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install native build dependencies
+        run: >-
+          brew install autoconf automake ccache cmake libtool
+          unbound xz zeromq
+
+      - name: Bootstrap Melos workspace
+        run: |
+          dart pub get
+          dart run melos bootstrap
+
+      - name: Record or verify macOS artifacts
+        env:
+          REQUESTED_MODE: ${{ inputs.mode }}
+        run: |
+          mode="$REQUESTED_MODE"
+          if [ -z "$mode" ] || [ "$mode" = auto ]; then
+            if [ -f reproducibility/manifests/macos.sha256 ]; then
+              mode=verify
+            else
+              mode=record
+            fi
+          fi
+          dart run melos run "repro:$mode:macos"
+
+      - name: Upload macOS artifacts and manifests
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: stack-wallet-cs-monero-macos-${{ github.sha }}
+          path: |
+            built_outputs/macos
+            reproducibility/manifests/macos.*
+            reproducibility/results/macos.*
+          if-no-files-found: warn
+          retention-days: 14
+
+  windows-precompiled:
+    name: Windows x64 WSL-compatible cross-build
+    if: >-
+      (github.event_name == 'workflow_dispatch' &&
+      (inputs.platform == 'all' || inputs.platform == 'windows')) ||
+      github.event_name == 'pull_request' ||
+      github.ref == 'refs/heads/main' ||
+      github.ref == 'refs/heads/feat/reproducible-precompiled-bins' ||
+      startsWith(github.ref,
+      'refs/heads/feat/reproducible-precompiled-bins-windows')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install WSL-compatible cross-build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf automake build-essential ccache cmake curl gperf \
+            g++-mingw-w64-x86-64-posix gcc-mingw-w64-x86-64-posix \
+            lbzip2 libtinfo6 libtool make patch pkg-config xz-utils
+
+      - name: Bootstrap Melos workspace
+        run: |
+          dart pub get
+          dart run melos bootstrap
+
+      - name: Record or verify Windows artifacts
+        env:
+          REQUESTED_MODE: ${{ inputs.mode }}
+        run: |
+          mode="$REQUESTED_MODE"
+          if [ -z "$mode" ] || [ "$mode" = auto ]; then
+            if [ -f reproducibility/manifests/windows.sha256 ]; then
+              mode=verify
+            else
+              mode=record
+            fi
+          fi
+          dart run melos run "repro:$mode:windows"
+
+      - name: Upload Windows artifacts and manifests
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: stack-wallet-cs-monero-windows-${{ github.sha }}
+          path: |
+            built_outputs/windows
+            reproducibility/manifests/windows.*
+            reproducibility/results/windows.*
+          if-no-files-found: warn
+          retention-days: 14
