@@ -1,0 +1,4 @@
+# stack-wallet-precompiled-sha256-v1
+# platform: macos
+e080451df255ea944f0432133d991b41636c763847a0db8c3f1ae4b0a248f544  Frameworks/MoneroWallet.framework/Versions/A/MoneroWallet
+66deb188feb58ccebb1485092bfc70fdb20779d6675377436675ec25ca8f04a4  Frameworks/MoneroWallet.framework/Versions/A/Resources/Info.plist

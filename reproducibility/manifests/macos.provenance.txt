@@ -1,0 +1,315 @@
+format=stack-wallet-precompiled-sha256-v1
+platform=macos
+dart_os=macos
+dart_os_version=Version 26.5.2 (Build 25F84)
+SOURCE_DATE_EPOCH=1
+ZERO_AR_DATE=1
+
+[source commit] exit=0
+e56ee4dd49228487bb5285a47d7cd91026bc7da9
+
+[source status] exit=0
+M cs_monero_flutter_libs_macos/macos/Frameworks/MoneroWallet.framework/Versions/A/MoneroWallet
+?? reproducibility/manifests/macos.sha256
+
+[monero_c commit] exit=0
+07f7a7f80735130ebfa5842ddee5139076408c0d
+
+[monero_c status] exit=0
+M monero
+ M monero_libwallet2_api_c/monero_libwallet2_api_c.exp
+ M monero_libwallet2_api_c/src/main/cpp/wallet2_api_c.cpp
+ M monero_libwallet2_api_c/src/main/cpp/wallet2_api_c.h
+
+[monero_c submodules] exit=0
++aa80168302b45c3714bb3b323c99e3da2398e1a6 monero (aa8016830)
+ d82e7c753e710b8000706dc3383b498438795208 monero/external/bc-ur (remotes/origin/misc)
+ 544e6fcc73c5ad9af48a8985c94f0f1d742ef2e0 monero/external/miniupnp (miniupnpd_2_1-461-g544e6fc)
+ bd79f5014c331273357277ed8a3d756fb61b9fa1 monero/external/polyseed (v2.0.0-8-gbd79f50)
+ ce72c9bb9cb799e0d9171094b9abb009e04c5bfc monero/external/randomx (v1.2.1-1-gce72c9b)
+ 129d19ba7f496df5e33658527a7158c79b99c21c monero/external/rapidjson (v1.1.0-401-g129d19ba)
+ 0a439623f75c029912728d80cb7f1b8b48739ca4 monero/external/rapidjson/thirdparty/gtest (release-1.8.0~5)
+ 633500ad8c8759995049ccd022107d1fa8a1bbc9 monero/external/supercop (heads/master-8-g633500a)
+ bff7fdfe436c727982cc553bdfb29a9021b423b0 monero/external/trezor-common (bff7fdf)
+ 88414ef852e21279f217d2f3f8fd439cd7c5fd9f monero/external/trezor-common/defs/ethereum/tokens (88414ef)
+ 3de4596fbe28956855df2ecb3c11c0bbc3535838 monero/external/utf8proc (v1.1.6-307-g3de4596)
+-3e302be710f4e6b4f58642989c8e47711362fa56 wownero
+-4a4e5b6c54c1710aa185cb0838b087238cbfc9a2 wownero_libwallet2_api_c/wownero-seed
+-83eefd205e3df84da0bf095257459fe778330316 zano
+
+[uname] exit=0
+Darwin MacBook-Pro.local 25.5.0 Darwin Kernel Version 25.5.0: Tue Jun  9 22:28:24 PDT 2026; root:xnu-12377.121.10~1/RELEASE_ARM64_T6020 arm64
+
+[macOS] exit=0
+ProductName:		macOS
+ProductVersion:		26.5.2
+BuildVersion:		25F84
+
+[Xcode] exit=0
+Xcode 26.6
+Build version 17F113
+
+[Dart] exit=0
+Dart SDK version: 3.10.4 (stable) (Tue Dec 9 00:01:55 2025 -0800) on "macos_arm64"
+
+[Flutter] exit=0
+Flutter 3.38.5 • channel [user-branch] • unknown source
+Framework • revision f6ff1529fd (9 months ago) • 2025-12-11 11:50:07 -0500
+Engine • hash c108a94d7a8273e112339e6c6833daa06e723a54 (revision 1527ae0ec5) (8 months ago) • 2025-12-11 15:04:31.000Z
+Tools • Dart 3.10.4 • DevTools 2.51.1
+
+[Melos] exit=0
+6.3.3
+There is a new version of melos available (8.3.0).
+
+[Dart dependencies] exit=0
+Dart SDK 3.10.4
+Flutter SDK 3.38.5
+cs_monero_workspace 0.0.0
+
+dev dependencies:
+- ffigen 15.0.0 [args cli_util collection ffi file glob logging meta package_config path pub_semver quiver yaml yaml_edit]
+- lints 5.1.1
+- melos 6.3.3 [ansi_styles args async cli_launcher cli_util collection conventional_commit file glob graphs http meta mustache_template path platform pool prompts pub_semver pub_updater pubspec_parse string_scanner yaml yaml_edit]
+
+transitive dependencies:
+- ansi_styles 0.3.2+1
+- args 2.7.0
+- async 2.13.1 [collection meta]
+- boolean_selector 2.1.2 [source_span string_scanner]
+- charcode 1.4.0
+- checked_yaml 2.0.4 [json_annotation source_span yaml]
+- cli_launcher 0.3.3+2 [path yaml]
+- cli_util 0.4.2 [meta path]
+- collection 1.19.1
+- conventional_commit 0.6.1+1
+- ffi 2.2.0
+- file 7.0.1 [meta path]
+- glob 2.1.3 [async collection file path string_scanner]
+- graphs 2.3.2 [collection]
+- http 1.6.0 [async http_parser meta web]
+- http_parser 4.1.2 [collection source_span string_scanner typed_data]
+- io 1.0.5 [meta path string_scanner]
+- json_annotation 4.12.0 [meta]
+- logging 1.3.0
+- matcher 0.12.20 [async meta stack_trace term_glyph test_api]
+- meta 1.19.0
+- mustache_template 2.0.5
+- package_config 2.2.0 [path]
+- path 1.9.1
+- platform 3.1.6
+- pool 1.5.2 [async stack_trace]
+- process 5.0.5 [file path platform]
+- prompts 2.0.0 [charcode io]
+- pub_semver 2.2.0 [collection]
+- pub_updater 0.5.0 [http json_annotation process pub_semver]
+- pubspec_parse 1.5.0 [checked_yaml collection json_annotation pub_semver yaml]
+- quiver 3.2.2 [matcher]
+- source_span 1.10.2 [collection path term_glyph]
+- stack_trace 1.12.1 [path]
+- stream_channel 2.1.4 [async]
+- string_scanner 1.4.1 [source_span]
+- term_glyph 1.2.2
+- test_api 0.7.12 [async boolean_selector collection meta source_span stack_trace stream_channel string_scanner term_glyph]
+- typed_data 1.4.0 [collection]
+- web 1.1.1
+- yaml 3.1.3 [collection source_span string_scanner]
+- yaml_edit 2.2.4 [collection meta source_span yaml]
+
+[CMake] exit=0
+cmake version 4.0.3
+
+CMake suite maintained and supported by Kitware (kitware.com/cmake).
+
+[Clang] exit=0
+Apple clang version 21.0.0 (clang-2100.1.1.101)
+Target: arm64-apple-darwin25.5.0
+Thread model: posix
+InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+
+[GCC] exit=0
+Apple clang version 21.0.0 (clang-2100.1.1.101)
+Target: arm64-apple-darwin25.5.0
+Thread model: posix
+InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+
+[MinGW GCC] exit=0
+x86_64-w64-mingw32-gcc (GCC) 16.1.0
+Copyright (C) 2026 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+[Homebrew packages] exit=0
+abseil 20240116.2
+autoconf 2.72
+automake 1.17
+berkeley-db 18.1.40_2
+berkeley-db@5 5.3.28_1
+blake3 1.8.2
+boost 1.87.0_1
+boost@1.76 1.76.0_5
+brotli 1.1.0
+ca-certificates 2026-05-14
+cairo 1.18.4
+cask 0.9.0
+cbindgen 0.28.0
+ccache 4.11.3_1
+cffi 2.0.0_1
+cloudflared 2026.7.0
+cmake 4.0.3
+cocoapods 1.16.2_1
+codex 0.38.0
+colima 0.10.3
+coreutils 9.5
+cryptography 49.0.0
+curl 8.12.1
+dav1d 1.5.3
+dfu-util 0.11
+docker 29.6.1
+docker-buildx 0.35.0
+docker-compose 5.3.1
+emacs 30.1
+ffmpeg 8.1.2_1
+fmt 11.2.0
+fontconfig 2.18.3 2.16.0
+freetype 2.14.3 2.13.3
+fribidi 1.0.16
+fswatch 1.21.0
+gcc 14.2.0_1
+gdbm 1.26
+gettext 1.0
+gh 2.97.0
+giflib 6.1.3 5.2.2
+git 2.49.0
+git-filter-repo 2.47.0
+git-lfs 3.7.1
+glib 2.88.3 2.84.0
+gmp 6.3.0
+gnupg 2.5.21
+gnutls 3.8.13_2
+graphite2 1.3.14 1.3.15
+harfbuzz 14.3.0 11.0.0
+hidapi 0.15.0
+hiredis 1.3.0
+hwloc 2.13.0
+icu4c@76 76.1_1
+icu4c@77 77.1
+icu4c@78 78.3
+imagesnap 0.3.0.2
+isl 0.27
+jansson 2.14
+jpeg-turbo 3.1.0 3.2.0
+json-c 0.19
+jsoncpp 1.9.5
+lame 3.100
+libassuan 3.0.2
+libevent 2.1.12_1
+libgcrypt 1.12.2
+libgpg-error 1.61
+libidn2 2.3.8
+libimagequant 4.3.4
+libksba 1.8.0
+libmpc 1.4.1
+libnghttp2 1.65.0
+libpng 1.6.47 1.6.58
+libraqm 0.10.2
+libsodium 1.0.20
+libssh2 1.11.1
+libtasn1 4.21.0
+libtiff 4.7.0 4.7.2
+libtool 2.4.7
+libunistring 1.4.2
+libusb 1.0.30
+libuv 1.52.1
+libvmaf 3.2.0
+libvpx 1.16.0
+libx11 1.8.12 1.8.13
+libxau 1.0.12
+libxcb 1.17.0
+libxdmcp 1.1.5
+libxext 1.3.7 1.3.6
+libxrender 0.9.12
+libyaml 0.2.5
+lima 2.1.3
+little-cms2 2.19 2.17
+lz4 1.10.0
+lzo 2.10
+m4 1.4.19
+make 4.4.1
+meson 1.11.1
+mingw-w64 14.0.0_1
+molten-vk 1.4.0
+mpdecimal 4.0.1
+mpfr 4.2.2
+nettle 4.0
+ninja 1.13.2
+npth 1.8
+numpy 2.2.4
+nvm 0.40.5
+openblas 0.3.29
+openjdk 23.0.2
+openjdk@17 17.0.20
+openjpeg 2.5.3
+openldap 2.6.8
+openssl@1.1 1.1.1w
+openssl@3 3.6.3
+opus 1.6.1
+p11-kit 0.26.2 0.25.5
+pandoc 3.6
+pcre2 10.47_1 10.46
+peon-ping 1.8.1
+perl 5.40.1
+pillow 11.1.0
+pinentry 1.3.3
+pipx 1.7.1_1
+pixman 0.44.2 0.46.4
+pkgconf 2.5.1
+podman 6.0.2
+protobuf 27.1
+pycparser 3.0
+python-matplotlib 3.10.1
+python-packaging 24.2
+python-setuptools 80.9.0
+python@3.10 3.10.18
+python@3.13 3.13.5 3.13.2
+python@3.14 3.14.6
+qhull 2020.2
+readline 8.3.3
+redis 8.4.0
+ripgrep 14.1.1
+rtmpdump 2.4-20151223_3
+ruby 3.4.2
+rustup 1.28.1
+sdl2-compat 2.32.70
+sdl3 3.4.12
+shaderc 2026.1
+sqlite 3.53.1 3.53.3
+svt-av1 4.1.0
+tree-sitter 0.25.3
+unbound 1.22.0
+unzip 6.0_8
+virtualenv 20.33.1
+webp 1.5.0 1.6.0
+x264 r3222
+x265 4.2
+xorgproto 2024.1 2025.1
+xxhash 0.8.3
+xz 5.8.3
+ykman 5.9.2
+zeromq 4.3.5_2
+zlib 1.3.1
+zstd 1.5.7_1
+blackhole-2ch 0.7.0
+chromedriver 150.0.7871.46
+chromium latest
+db-browser-for-sqlite 3.13.0
+dropbox 204.4.5420
+gitkraken-cli 3.1.48
+godot 4.7.1
+qt-creator 14.0.0
+supersonic 0.21.1
+telegram 10.15.2,265540
+vscodium 1.91.1.24193
+
+[Debian packages] unavailable: ProcessException: No such file or directory
+  Command: dpkg-query -W -f=${Package}=${Version}\n autoconf automake build-essential ccache cmake g++ g++-mingw-w64-x86-64 gcc gcc-mingw-w64-x86-64 libtool make pkg-config
