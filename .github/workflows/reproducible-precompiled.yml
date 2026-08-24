@@ -153,11 +153,22 @@ jobs:
       github.ref == 'refs/heads/feat/reproducible-precompiled-bins' ||
       startsWith(github.ref,
       'refs/heads/feat/reproducible-precompiled-bins-macos')
-    runs-on: macos-14
+    runs-on: macos-26
     timeout-minutes: 360
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Verify pinned macOS toolchain
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = arm64
+          test "$(sw_vers -productVersion)" = 26.5.2
+          test "$(sw_vers -buildVersion)" = 25F84
+          test "$(xcodebuild -version | sed -n '1p')" = "Xcode 26.6"
+          test "$(xcodebuild -version | sed -n '2p')" = "Build version 17F113"
 
       - name: Install Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
