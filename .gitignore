@@ -13,3 +13,4 @@ coverage/
 
 pubspec.lock
 pubspec_overrides.yaml
+built_outputs-*.tar.gz

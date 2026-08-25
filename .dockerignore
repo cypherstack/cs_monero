@@ -1,0 +1,6 @@
+*
+!patches
+!tools
+# Bundled runtime DLLs required by build_libs.dart for the windows platform.
+!cs_monero_flutter_libs_windows/windows/lib/libssp-0.dll
+!cs_monero_flutter_libs_windows/windows/lib/libwinpthread-1.dll
