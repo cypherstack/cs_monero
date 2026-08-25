@@ -1,13 +1,14 @@
-FROM golang:1.26.0-bookworm@sha256:c7a82e9e2df2fea5d8cb62a16aa6f796d2b2ed81ccad4ddd2bc9f0d22936c3f2 AS base
+FROM --platform=linux/amd64 ubuntu:26.04@sha256:3131b4cc82a783df6c9df078f86e01819a13594b865c2cad47bd1bca2b7063bb AS base
 
 ARG DART_VERSION=3.12.2
 ARG DART_SHA256=28e47b44cf075f36771046c068bb0d174201cf9c7608744aed1cc23204299c2d
 
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         autoconf automake build-essential ca-certificates clang cmake curl \
-        file gettext git gperf libtool llvm make pkg-config python3 \
-        sudo texinfo unzip xz-utils \
+        file gcc-x86-64-linux-gnu gettext git golang gperf libtool llvm make \
+        patch pkg-config python3 sudo texinfo unzip xz-utils \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl -fsSL -o /tmp/dart.zip \
@@ -17,7 +18,8 @@ RUN curl -fsSL -o /tmp/dart.zip \
     && rm /tmp/dart.zip
 ENV PATH="/usr/lib/dart-sdk/bin:${PATH}"
 
-RUN useradd -ms /bin/bash -u 1000 builder \
+RUN userdel -r ubuntu \
+    && useradd -ms /bin/bash -u 1000 builder \
     && printf 'builder ALL=(ALL) NOPASSWD:ALL\n' > /etc/sudoers.d/builder \
     && chmod 0440 /etc/sudoers.d/builder \
     && mkdir -p /w \
