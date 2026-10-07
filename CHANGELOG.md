@@ -3,6 +3,27 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 2026-10-07
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - [`cs_monero` - `v4.0.0`](#cs_monero---v400)
+
+Packages with other changes:
+
+ - There are no other changes in this release.
+
+---
+
+#### `cs_monero` - `v4.0.0`
+
+ - **BREAKING** **FIX**(cs_monero): preserve split payment txids and hexes as lists. ([76f1377c](https://github.com/cypherstack/cs_monero/commit/76f1377cc18f984e978e8a495479ddb43b0d302d))
+
+
 ## 2025-11-17
 
 ### Changes

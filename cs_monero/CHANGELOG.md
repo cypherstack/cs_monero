@@ -1,3 +1,9 @@
+## 4.0.0
+
+> Note: This release has breaking changes.
+
+ - **BREAKING** **FIX**(cs_monero): preserve split payment txids and hexes as lists. ([76f1377c](https://github.com/cypherstack/cs_monero/commit/76f1377cc18f984e978e8a495479ddb43b0d302d))
+
 ## 3.2.0
 
 ## 3.1.0
