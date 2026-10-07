@@ -948,8 +948,8 @@ Map<String, dynamic> _createTransaction(Map<String, dynamic> args) {
   return {
     "amount": xmr_ffi.getPendingTransactionAmount(pendingTxPointer),
     "fee": xmr_ffi.getPendingTransactionFee(pendingTxPointer),
-    "txid": xmr_ffi.getPendingTransactionTxid(pendingTxPointer),
-    "hex": xmr_ffi.getPendingTransactionHex(pendingTxPointer),
+    "txids": xmr_ffi.getPendingTransactionTxids(pendingTxPointer),
+    "hexes": xmr_ffi.getPendingTransactionHexes(pendingTxPointer),
     "pointerAddress": pendingTxPointer.address,
   };
 }
@@ -981,8 +981,8 @@ Map<String, dynamic> _createTransactionMultiDest(Map<String, dynamic> args) {
   return {
     "amount": xmr_ffi.getPendingTransactionAmount(pendingTxPointer),
     "fee": xmr_ffi.getPendingTransactionFee(pendingTxPointer),
-    "txid": xmr_ffi.getPendingTransactionTxid(pendingTxPointer),
-    "hex": xmr_ffi.getPendingTransactionHex(pendingTxPointer),
+    "txids": xmr_ffi.getPendingTransactionTxids(pendingTxPointer),
+    "hexes": xmr_ffi.getPendingTransactionHexes(pendingTxPointer),
     "pointerAddress": pendingTxPointer.address,
   };
 }

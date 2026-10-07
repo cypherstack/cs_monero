@@ -1109,8 +1109,8 @@ class MoneroWallet extends Wallet {
       return PendingTransaction(
         amount: BigInt.from(pending["amount"] as int),
         fee: BigInt.from(pending["fee"] as int),
-        txid: pending["txid"] as String,
-        hex: pending["hex"] as String,
+        txids: pending["txids"] as List<String>,
+        hexes: pending["hexes"] as List<String>,
         pointerAddress: pending["pointerAddress"] as int,
       );
     } finally {
@@ -1164,8 +1164,8 @@ class MoneroWallet extends Wallet {
       return PendingTransaction(
         amount: BigInt.from(pending["amount"] as int),
         fee: BigInt.from(pending["fee"] as int),
-        txid: pending["txid"] as String,
-        hex: pending["hex"] as String,
+        txids: pending["txids"] as List<String>,
+        hexes: pending["hexes"] as List<String>,
         pointerAddress: pending["pointerAddress"] as int,
       );
     } finally {

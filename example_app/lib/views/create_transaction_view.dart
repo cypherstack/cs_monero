@@ -315,8 +315,8 @@ Future<void> showConfirmDialog(
             wallet.runtimeType,
           ),
         ),
-        InfoItem(label: "txid", value: tx.txid),
-        InfoItem(label: "hex", value: tx.hex),
+        InfoItem(label: "txids", value: tx.txids.join("\n")),
+        InfoItem(label: "hexes", value: tx.hexes.join("\n")),
         const SizedBox(height: 16),
         TextButton(
           onPressed: commit,

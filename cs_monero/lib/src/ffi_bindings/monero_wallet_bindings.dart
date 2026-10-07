@@ -338,36 +338,26 @@ int getPendingTransactionFee(Pointer<Void> pendingTransactionPointer) {
   return bindings.MONERO_PendingTransaction_fee(pendingTransactionPointer);
 }
 
-String getPendingTransactionTxid(
-  Pointer<Void> pendingTransactionPointer, {
-  String separator = "",
-}) {
-  final separatorPointer = separator.toNativeUtf8().cast<Char>();
-  try {
-    final stringPointer = bindings.MONERO_PendingTransaction_txid(
-      pendingTransactionPointer,
-      separatorPointer,
-    ).cast<Utf8>();
-    return convertAndFree(stringPointer);
-  } finally {
-    calloc.free(separatorPointer);
-  }
+List<String> getPendingTransactionTxids(
+  Pointer<Void> pendingTransactionPointer,
+) {
+  final stringPointer = bindings.MONERO_PendingTransaction_txid(
+    pendingTransactionPointer,
+    defaultSeparator,
+  ).cast<Utf8>();
+  final txids = convertAndFree(stringPointer);
+  return txids.isEmpty ? [] : txids.split(defaultSeparatorStr);
 }
 
-String getPendingTransactionHex(
-  Pointer<Void> pendingTransactionPointer, {
-  String separator = "",
-}) {
-  final separatorPointer = separator.toNativeUtf8().cast<Char>();
-  try {
-    final stringPointer = bindings.MONERO_PendingTransaction_hex(
-      pendingTransactionPointer,
-      separatorPointer,
-    ).cast<Utf8>();
-    return convertAndFree(stringPointer);
-  } finally {
-    calloc.free(separatorPointer);
-  }
+List<String> getPendingTransactionHexes(
+  Pointer<Void> pendingTransactionPointer,
+) {
+  final stringPointer = bindings.MONERO_PendingTransaction_hex(
+    pendingTransactionPointer,
+    defaultSeparator,
+  ).cast<Utf8>();
+  final hexes = convertAndFree(stringPointer);
+  return hexes.isEmpty ? [] : hexes.split(defaultSeparatorStr);
 }
 
 bool commitPendingTransaction(
