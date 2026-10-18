@@ -1,8 +1,8 @@
 diff --git a/monero_libwallet2_api_c/monero_libwallet2_api_c.exp b/monero_libwallet2_api_c/monero_libwallet2_api_c.exp
-index 1aa2f26..7f3e164 100644
+index d7a404e..30b74d2 100644
 --- a/monero_libwallet2_api_c/monero_libwallet2_api_c.exp
 +++ b/monero_libwallet2_api_c/monero_libwallet2_api_c.exp
-@@ -282,9 +282,6 @@ _MONERO_WalletManager_blockchainTargetHeight
+@@ -286,9 +286,6 @@ _MONERO_WalletManager_blockchainTargetHeight
  _MONERO_WalletManager_networkDifficulty
  _MONERO_WalletManager_miningHashRate
  _MONERO_WalletManager_blockTarget
@@ -12,11 +12,11 @@ index 1aa2f26..7f3e164 100644
  _MONERO_WalletManager_resolveOpenAlias
  _MONERO_WalletManager_setProxy
  _MONERO_WalletManagerFactory_getWalletManager
-diff --git a/monero_libwallet2_api_c/src/main/cpp/wallet2_api_c.cpp b/monero_libwallet2_api_c/src/main/cpp/wallet2_api_c.cpp
-index c58fbec..5239e74 100644
---- a/monero_libwallet2_api_c/src/main/cpp/wallet2_api_c.cpp
-+++ b/monero_libwallet2_api_c/src/main/cpp/wallet2_api_c.cpp
-@@ -2387,27 +2387,6 @@ uint64_t MONERO_WalletManager_blockTarget(void* wm_ptr) {
+diff --git a/monero_libwallet2_api_c/src/main/cpp/monero_wallet2_api_c.cpp b/monero_libwallet2_api_c/src/main/cpp/monero_wallet2_api_c.cpp
+index 5e64296..86daa7a 100644
+--- a/monero_libwallet2_api_c/src/main/cpp/monero_wallet2_api_c.cpp
++++ b/monero_libwallet2_api_c/src/main/cpp/monero_wallet2_api_c.cpp
+@@ -2277,27 +2277,6 @@ uint64_t MONERO_WalletManager_blockTarget(void* wm_ptr) {
      return wm->blockTarget();
      DEBUG_END()
  }
@@ -44,11 +44,11 @@ index c58fbec..5239e74 100644
  //     virtual std::string resolveOpenAlias(const std::string &address, bool &dnssec_valid) const = 0;
  const char* MONERO_WalletManager_resolveOpenAlias(void* wm_ptr, const char* address, bool dnssec_valid) {
      DEBUG_START()
-diff --git a/monero_libwallet2_api_c/src/main/cpp/wallet2_api_c.h b/monero_libwallet2_api_c/src/main/cpp/wallet2_api_c.h
-index ff28d68..e9d6078 100644
---- a/monero_libwallet2_api_c/src/main/cpp/wallet2_api_c.h
-+++ b/monero_libwallet2_api_c/src/main/cpp/wallet2_api_c.h
-@@ -966,12 +966,6 @@ extern ADDAPI uint64_t MONERO_WalletManager_networkDifficulty(void* wm_ptr);
+diff --git a/monero_libwallet2_api_c/src/main/cpp/monero_wallet2_api_c.h b/monero_libwallet2_api_c/src/main/cpp/monero_wallet2_api_c.h
+index eff5c58..e28e71d 100644
+--- a/monero_libwallet2_api_c/src/main/cpp/monero_wallet2_api_c.h
++++ b/monero_libwallet2_api_c/src/main/cpp/monero_wallet2_api_c.h
+@@ -976,12 +976,6 @@ extern ADDAPI uint64_t MONERO_WalletManager_networkDifficulty(void* wm_ptr);
  extern ADDAPI double MONERO_WalletManager_miningHashRate(void* wm_ptr);
  //     virtual uint64_t blockTarget() = 0;
  extern ADDAPI uint64_t MONERO_WalletManager_blockTarget(void* wm_ptr);

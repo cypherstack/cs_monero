@@ -38,16 +38,11 @@ void main(List<String> args) async {
 
   final nProc = _getNProc(platform);
   final triples = _getTriples(platform);
-  final bt = _getBinType(platform);
+  final version = _moneroCVersion();
 
   for (final triple in triples) {
     for (final coin in coins) {
       await runAsync("./build_single.sh", [coin, triple, "-j$nProc"]);
-      final path = "$envMoneroCDir"
-          "${Platform.pathSeparator}release"
-          "${Platform.pathSeparator}$coin"
-          "${Platform.pathSeparator}${triple}_libwallet2_api_c.$bt";
-      await runAsync("unxz", ["-f", "$path.xz"]);
     }
   }
 
@@ -75,10 +70,7 @@ void main(List<String> args) async {
           await runAsync(
             "cp",
             [
-              "$envMoneroCDir"
-                  "${Platform.pathSeparator}release"
-                  "${Platform.pathSeparator}$coin"
-                  "${Platform.pathSeparator}${triple}_libwallet2_api_c.so",
+              _releasedLibPath(version, triple, coin, "so"),
               "${dir.path}"
                   "${Platform.pathSeparator}lib${coin}_libwallet2_api_c.so",
             ],
@@ -99,20 +91,7 @@ void main(List<String> args) async {
 
       // ios and macos only have 1 triple currently
       final triple = _getTriples(platform).first;
-
-      final String xmrDylib;
-      final String wowDylib;
-      if (platform == "ios") {
-        xmrDylib = "$envMoneroCDir"
-            "${Platform.pathSeparator}release"
-            "${Platform.pathSeparator}monero"
-            "${Platform.pathSeparator}${triple}_libwallet2_api_c.dylib";
-      } else {
-        xmrDylib = "$envMoneroCDir"
-            "${Platform.pathSeparator}release"
-            "${Platform.pathSeparator}monero"
-            "${Platform.pathSeparator}${triple}_libwallet2_api_c.dylib";
-      }
+      final xmrDylib = _releasedLibPath(version, triple, "monero", "dylib");
 
       await createFramework(
         frameworkName: "MoneroWallet",
@@ -131,10 +110,7 @@ void main(List<String> args) async {
         await runAsync(
           "cp",
           [
-            "$envMoneroCDir"
-                "${Platform.pathSeparator}release"
-                "${Platform.pathSeparator}$coin"
-                "${Platform.pathSeparator}x86_64-linux-gnu_libwallet2_api_c.so",
+            _releasedLibPath(version, triples.first, coin, "so"),
             "${dir.path}"
                 "${Platform.pathSeparator}${coin}_libwallet2_api_c.so",
           ],
@@ -150,54 +126,69 @@ void main(List<String> args) async {
       await runAsync(
         "cp",
         [
-          "$envMoneroCDir"
-              "${Platform.pathSeparator}release"
-              "${Platform.pathSeparator}monero"
-              "${Platform.pathSeparator}x86_64-w64-mingw32_libwallet2_api_c.dll",
+          _releasedLibPath(version, triples.first, "monero", "dll"),
           "${dir.path}"
               "${Platform.pathSeparator}monero_libwallet2_api_c.dll",
         ],
       );
 
-      final sspPath = "$envMoneroCDir"
-          "${Platform.pathSeparator}release"
-          "${Platform.pathSeparator}monero"
-          "${Platform.pathSeparator}x86_64-w64-mingw32_libssp-0.dll";
-
-      if (File("$sspPath.xz").existsSync()) {
-        await runAsync("unxz", ["-f", "$sspPath.xz"]);
+      for (final name in _windowsDlls) {
+        final dll = _windowsDllPath(name);
+        if (!File(dll).existsSync()) {
+          throw Exception(
+            "$dll is missing. The windows package ships it as a commited"
+            " binary; restore it from git before building.",
+          );
+        }
+        await runAsync(
+          "cp",
+          [
+            dll,
+            "${dir.path}"
+                "${Platform.pathSeparator}$name",
+          ],
+        );
       }
-      await runAsync(
-        "cp",
-        [
-          sspPath,
-          "${dir.path}"
-              "${Platform.pathSeparator}libssp-0.dll",
-        ],
-      );
-
-      final pThreadPath = "$envMoneroCDir"
-          "${Platform.pathSeparator}release"
-          "${Platform.pathSeparator}monero"
-          "${Platform.pathSeparator}x86_64-w64-mingw32_libwinpthread-1.dll";
-
-      if (File("$pThreadPath.xz").existsSync()) {
-        await runAsync("unxz", ["-f", "$pThreadPath.xz"]);
-      }
-      await runAsync(
-        "cp",
-        [
-          pThreadPath,
-          "${dir.path}"
-              "${Platform.pathSeparator}libwinpthread-1.dll",
-        ],
-      );
       break;
 
     default:
       throw Exception("Not sure how you got this far tbh");
   }
 }
+
+const _windowsDlls = ["libssp-0.dll", "libwinpthread-1.dll"];
+
+String _windowsDllPath(String name) => "$envProjectDir"
+    "${Platform.pathSeparator}cs_monero_flutter_libs_windows"
+    "${Platform.pathSeparator}windows"
+    "${Platform.pathSeparator}lib"
+    "${Platform.pathSeparator}$name";
+
+/// The tag build_single.sh names its release directory after.
+String _moneroCVersion() {
+  final result = Process.runSync(
+    "git",
+    ["describe", "--tags"],
+    workingDirectory: envMoneroCDir,
+  );
+  if (result.exitCode != 0) {
+    throw Exception("code=${result.exitCode}, stderr=${result.stderr}");
+  }
+  return result.stdout.toString().trim();
+}
+
+/// `release/<version>/<triple>/lib<coin>_wallet2_api_c.<ext>`
+String _releasedLibPath(
+  String version,
+  String triple,
+  String coin,
+  String ext,
+) =>
+    "$envMoneroCDir"
+    "${Platform.pathSeparator}release"
+    "${Platform.pathSeparator}$version"
+    "${Platform.pathSeparator}$triple"
+    "${Platform.pathSeparator}lib${coin}_wallet2_api_c.$ext";
 
 String _mapAndroid(String triple) {
   switch (triple) {
@@ -263,24 +254,6 @@ String _getNProc(String platform) {
     case "macos":
     case "windows":
       return nProc.toString();
-
-    default:
-      throw ArgumentError(platform, "platform");
-  }
-}
-
-String _getBinType(String platform) {
-  switch (platform) {
-    case "android":
-    case "linux":
-      return "so";
-
-    case "windows":
-      return "dll";
-
-    case "ios":
-    case "macos":
-      return "dylib";
 
     default:
       throw ArgumentError(platform, "platform");
