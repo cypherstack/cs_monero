@@ -1,0 +1,217 @@
+name: Build libraries
+
+on:
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: >
+          Platforms to build: a comma separated list of android, linux,
+          windows, macos, ios, or "all" (needs the SIMPLYBS_MIRROR secret).
+        default: linux,windows,android
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  plan:
+    name: Plan
+    runs-on: ubuntu-24.04
+    outputs:
+      builds: ${{ steps.pick.outputs.builds }}
+      image: ${{ steps.pick.outputs.image }}
+      depends_targets: ${{ steps.pick.outputs.depends_targets }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Pick platforms
+        id: pick
+        env:
+          REQUESTED: ${{ inputs.platforms || 'linux,windows,android' }}
+          REPOSITORY: ${{ github.repository }}
+          HAVE_APPLE_SDK: ${{ secrets.SIMPLYBS_MIRROR != '' }}
+        run: |
+          set -euo pipefail
+          set -f
+
+          known="android linux windows macos ios"
+
+          requested=$(tr 'A-Z,' 'a-z ' <<< "$REQUESTED")
+          if [ "$(tr -d '[:space:]' <<< "$requested")" = all ]; then
+            requested=$known
+          fi
+
+          platforms=""
+          for want in $requested; do
+            match=""
+            for candidate in $known; do
+              if [ "$want" = "$candidate" ]; then
+                match=$candidate
+              fi
+            done
+
+            if [ -z "$match" ]; then
+              echo "::error::Unknown platform '$want'. Known: $known"
+              exit 1
+            fi
+            if [ "$match" = macos ] || [ "$match" = ios ]; then
+              if [ "$HAVE_APPLE_SDK" != true ]; then
+                echo "::error::Cannot build $match: the SIMPLYBS_MIRROR secret is not set. Host Apple's Xcode .xip yourself (builder/localhost_xip.sh does it locally) and set the secret"
+                exit 1
+              fi
+            fi
+
+            echo "will build $match"
+            platforms="$platforms $match"
+          done
+          platforms=${platforms# }
+
+          if [ -z "$platforms" ]; then
+            echo "::error::No platforms requested"
+            exit 1
+          fi
+
+          tag="$(builder/depends_tree.sh)-$(builder/builder_id.sh)"
+
+          prefix="ghcr.io/$(tr 'A-Z' 'a-z' <<< "$REPOSITORY")"
+          image="$prefix-depends:$tag"
+
+          spec='{
+            "linux":   ["x86_64-linux-gnu"],
+            "windows": ["x86_64-w64-mingw32"],
+            "android": ["x86_64-linux-android", "armv7a-linux-androideabi", "aarch64-linux-android"],
+            "macos":   ["aarch64-apple-darwin"],
+            "ios":     ["aarch64-apple-ios"]
+          }'
+
+          builds=$(jq -c -n --argjson spec "$spec" --arg list "$platforms" '
+            ($list | split(" ")) | map({
+              platform: .,
+              targets: ($spec[.] | join(" "))
+            })')
+
+          apple=false
+          case " $platforms " in
+            *" macos "*|*" ios "*) apple=true ;;
+          esac
+          depends_targets=$(jq -r -n --argjson spec "$spec" --argjson apple "$apple" '
+            [$spec | to_entries[]
+             | select($apple or (.key != "macos" and .key != "ios"))
+             | .value[]] | unique | join(" ")')
+
+          {
+            echo "builds=$builds"
+            echo "image=$image"
+            echo "depends_targets=$depends_targets"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "dependency image $image"
+          echo "  triples: $depends_targets"
+
+  depends:
+    name: Dependencies
+    needs: plan
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/prepare-runner
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build the dependency image
+        env:
+          IMAGE: ${{ needs.plan.outputs.image }}
+          DEPENDS_TARGETS: ${{ needs.plan.outputs.depends_targets }}
+          SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}
+          # Only when apple triples are in the set; a BuildKit secret, so it
+          # never lands in the (public) image or its history.
+          SIMPLYBS_MIRROR: ${{ contains(needs.plan.outputs.depends_targets, 'apple') && secrets.SIMPLYBS_MIRROR || '' }}
+        run: |
+          set -uo pipefail
+
+          if docker pull "$IMAGE" >/dev/null 2>&1 \
+             && builder/depends_usable.sh "$IMAGE" $DEPENDS_TARGETS; then
+            echo "reusing $IMAGE"
+            exit 0
+          fi
+          echo "no usable $IMAGE yet, building it"
+
+          secret=""
+          if [ -n "${SIMPLYBS_MIRROR:-}" ]; then
+            secret="--secret id=simplybs_mirror,env=SIMPLYBS_MIRROR"
+          fi
+
+          if ! docker build \
+              --file builder/depends.Dockerfile \
+              --tag "$IMAGE" \
+              --build-arg "DEPENDS_TARGETS=$DEPENDS_TARGETS" \
+              --build-arg "SOURCE_URL=$SOURCE_URL" \
+              $secret \
+              .; then
+            echo "::error::Dependency build failed. The build jobs would hit the same error, so retrying without a fix will not help."
+            exit 1
+          fi
+
+          if docker push "$IMAGE"; then
+            echo "published $IMAGE"
+          else
+            echo "::warning::Could not push $IMAGE. The libraries will still be built, but each platform job has to rebuild its own triples"
+          fi
+
+  build:
+    name: ${{ matrix.platform }}
+    needs: [plan, depends]
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.builds) }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/prepare-runner
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve the dependency image
+        id: deps
+        env:
+          IMAGE: ${{ needs.plan.outputs.image }}
+          DEPENDS_TARGETS: ${{ matrix.targets }}
+        run: |
+          set -uo pipefail
+          if docker pull "$IMAGE" >/dev/null 2>&1 \
+             && builder/depends_usable.sh "$IMAGE" $DEPENDS_TARGETS; then
+            echo "using prebuilt $IMAGE"
+            echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::$IMAGE is unavailable or does not contain $DEPENDS_TARGETS, so this job will rebuild the dependency tree itself"
+            echo "image=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build ${{ matrix.platform }}
+        env:
+          PLATFORMS: ${{ matrix.platform }}
+          DEPENDS_IMAGE: ${{ steps.deps.outputs.image }}
+          DEPENDS_TARGETS: ${{ matrix.targets }}
+          # The image retains no SDK, so apple builds refetch the xip; only
+          # the two platforms that need it ever see the value.
+          SIMPLYBS_MIRROR: ${{ (matrix.platform == 'macos' || matrix.platform == 'ios') && secrets.SIMPLYBS_MIRROR || '' }}
+        run: ./builder/release.sh
+
+      - name: Archive built_outputs/${{ matrix.platform }}
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -euo pipefail
+          tar -czf "built_outputs-$PLATFORM.tar.gz" "built_outputs/$PLATFORM"
+
+          sha256sum "built_outputs-$PLATFORM.tar.gz"
+
+      - name: Upload built_outputs/${{ matrix.platform }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: built_outputs-${{ matrix.platform }}
+          path: built_outputs-${{ matrix.platform }}.tar.gz
+          if-no-files-found: error

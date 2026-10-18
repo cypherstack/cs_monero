@@ -44,6 +44,22 @@ proceeding.  To build the libraries yourself:
   https://docs.flutter.dev/get-started/install/linux/desktop
 - Windows: Due to path handling in a makefile in monero_c, the WSL `PATH` cannot contain spaces or brackets.  To work around this, run `melos prepareMoneroC` and then `export PATH=$(echo "$PATH" | tr ':' '\n' | grep -v '[ ()]' | paste -sd:)` before running `melos build:windows`.
 
+### Container build
+`builder/release.sh` runs the same builds inside docker. It first builds a dependency-tree image
+before building libraries and copies the results to `built_outputs/<platform>`.
+
+Options through environment variables:
+- `PLATFORMS`: platforms to build, default `linux windows android`.
+- `DEPENDS_IMAGE`: reuse a prebuilt dependency image (for example one
+  published by CI) and skip the first stage.
+- `SIMPLYBS_MIRROR`: base url hosting the Apple SDK xip, required for `macos`
+  and `ios`. `builder/localhost_xip.sh <path to xip> [port]` serves a locally
+  downloaded xip and prints the export line.
+- `NO_CACHE=1`: pass `--no-cache` to the docker builds.
+
+The `Build libraries` GitHub workflow (manual dispatch) runs the same script
+and caches the dependency image in the repository's container registry.
+
 ## TODO
 - Tests? (at least what is possible)
 - Accounts API?

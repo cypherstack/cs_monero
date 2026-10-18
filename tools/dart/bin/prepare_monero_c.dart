@@ -7,31 +7,37 @@ void main() async {
   await createBuildDirs();
 
   final moneroCDir = Directory(envMoneroCDir);
-  if (moneroCDir.existsSync()) {
-    // TODO: something?
+  if (moneroCDir.existsSync() && _head() == kMoneroCHash) {
     l("monero_c dir already exists");
     return;
   } else {
-    // Change directory to BUILD_DIR
-    Directory.current = envBuildDir;
+    if (moneroCDir.existsSync()) {
+      Directory.current = moneroCDir;
+      l('Syncing monero_c to $kMoneroCHash...');
+      await runAsync('git', ['fetch', 'origin', kMoneroCHash]);
+      await runAsync('git', ['reset', '--hard']);
+    } else {
+      // Change directory to BUILD_DIR
+      Directory.current = envBuildDir;
 
-    // Clone the monero_c repository
-    await runAsync('git', [
-      'clone',
-      kMoneroCRepo,
-    ]);
+      // Clone the monero_c repository
+      await runAsync('git', [
+        'clone',
+        kMoneroCRepo,
+      ]);
 
-    // Change directory to MONERO_C_DIR
-    Directory.current = moneroCDir;
+      // Change directory to MONERO_C_DIR
+      Directory.current = moneroCDir;
+    }
 
     // Checkout specific commit and reset
     await runAsync('git', ['checkout', kMoneroCHash]);
     await runAsync('git', ['reset', '--hard']);
 
-    // Update submodules
+    // Update the monero submodule
     await runAsync(
       'git',
-      ['submodule', 'update', '--init', '--force', '--recursive'],
+      ['submodule', 'update', '--init', '--force', '--recursive', 'monero'],
     );
 
     // Apply patches
@@ -46,4 +52,16 @@ void main() async {
       moneroAVPatchPath,
     ]);
   }
+}
+
+String _head() {
+  final result = Process.runSync(
+    "git",
+    ["rev-parse", "HEAD"],
+    workingDirectory: envMoneroCDir,
+  );
+  if (result.exitCode != 0) {
+    throw Exception("code=${result.exitCode}, stderr=${result.stderr}");
+  }
+  return result.stdout.toString().trim();
 }

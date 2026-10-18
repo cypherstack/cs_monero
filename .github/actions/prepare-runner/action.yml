@@ -1,0 +1,24 @@
+name: Prepare runner
+description: >
+  Reclaim runner disk space and log in to ghcr.io, as both jobs in
+  build_libs.yml need.
+
+inputs:
+  token:
+    description: GITHUB_TOKEN, used only to log in to ghcr.io.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Free disk space
+      shell: bash
+      run: |
+        sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+
+    - name: Log in to ghcr.io
+      shell: bash
+      env:
+        TOKEN: ${{ inputs.token }}
+        ACTOR: ${{ github.actor }}
+      run: echo "$TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
